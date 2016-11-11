@@ -3,10 +3,16 @@
 #include "factgenerator.h"
 #include<Wire.h>
 #include <EEPROM.h>
+#include "EMIC2.h"
+//need to add the emic 2 library
+
+#define rxpin 2
+#define txpin 3
 
 // uncomment if need to generate facts for testing purposes
 // #define GENERATEFACTS
 
+EMIC2 emic;
 MPU6050 accelgyro;
 int16_t ax, ay, az;           // current acceleration values
 
@@ -58,6 +64,11 @@ void testConnection() {
 void setup() {
   Serial.begin(9600);
   Wire.begin();
+
+  // initialize emic devices
+  emic.begin(rxpin, txpin);
+  emic.setVoice(8); //sets the voice, there are 9 types, 0 - 8
+  emic.setVolume(10); //sets the vloume, 10 is max 
   
   // initialize device
   Serial.println("Initializing I2C devices...");
@@ -99,8 +110,17 @@ void cacheFactLocally(char* fact, int factLength) {
   }
 }
 
-// plays fact when shake or throw is detected
-void playFact() {
+// plays fact on TTS module
+void playFact(String fact) {
+  emic.speak(fact);
+    delay(1000); //adds a pause after 1 second
+    ~emic;
+    delay(1000); //unpauses after 1 second
+    ~emic;
+}
+
+// get fact when shake or throw is detected
+void getFact() {
   // reset factIndex if all facts have been played
   if (factIndex >= address) factIndex = 2;
 
@@ -115,6 +135,7 @@ void playFact() {
   // update fact address for next fact to be played
   factIndex++;
   Serial.println(fact);
+  playFact(fact);
 }
 
 // Checks difference in acceleration for throw
@@ -129,7 +150,7 @@ void checkAcceleration() {
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println("Throw or shake detected");
     Serial.println("Stating fact...");
-    playFact(); // Read fact from EEPROM
+    getFact(); // Read fact from EEPROM and plays it
     sampleAcceleration(50); // set delay long enough to  for fact to be played
   } else {
     x_prev = ax;
