@@ -7,8 +7,8 @@
 #include "EMIC2.h"
 //need to add the emic 2 library
 
-#define rxpin 2
-#define txpin 3
+#define rxpin 4
+#define txpin 5
 
 // uncomment if need to generate facts for testing purposes
 // #define GENERATEFACTS
@@ -19,20 +19,21 @@ int16_t ax, ay, az;           // current acceleration values
 
 int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
-int32_t threshold = 25000;      // threshold for difference in acceleration
+int32_t threshold = 12000;      // threshold for difference in acceleration
 
 int16_t address = 0;          // address of next available space for fact storage
 const int maxFactSize = 140;  // maximum size of fact
 int factIndex = 2;            // address of fact to play
 
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   Wire.begin();
 
   // initialize emic devices
+  Serial.println("Intializing emic device...");
   emic.begin(rxpin, txpin);
   emic.setVoice(8); //sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(5); //sets the vloume, 10 is max 
+  emic.setVolume(10); //sets the vloume, 10 is max 
   
   // initialize device
   Serial.println("Initializing I2C devices...");
@@ -116,10 +117,6 @@ void cacheFactLocally(char* fact, int factLength) {
 void playFact(String fact) {
   Serial.println(fact);
   emic.speak(fact);
-    delay(1000); //adds a pause after 1 second
-    ~emic;
-    delay(1000); //unpauses after 1 second
-    ~emic;
 }
 
 // get fact when shake or throw is detected
@@ -137,8 +134,8 @@ void getFact() {
 
   // update fact address for next fact to be played
   factIndex++;
-  Serial.println(fact);
-  playFact(fact);
+  //playFact(fact);
+  playFact("this is a really long string and I don't know what else to say");
 }
 
 // Checks difference in acceleration for throw
@@ -171,14 +168,31 @@ void sampleAcceleration(int samples) {
 }
 
 void loop() {
-  //checkAcceleration();
+  checkAcceleration();
   //if (ax == 0 && ay == 0 && az == 0) testConnection();
-  //playFact("Hello World");
   
   #ifdef GENERATEFACTS
     generateFacts();
   #endif
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
  * 

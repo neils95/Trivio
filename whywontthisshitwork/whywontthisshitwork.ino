@@ -1,18 +1,16 @@
 #include <SoftwareSerial.h>
 #include <EMIC2.h>
-#define rxpin 2
-#define txpin 3
+#define rxpin 4
+#define txpin 5
 
 EMIC2 emic;
 
 void setup() {
   // initialize emic devices
+  Serial.begin(9600);
   emic.begin(rxpin, txpin);
-  //Serial.println("hello1");
   emic.setVoice(8); //sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(5); //sets the vloume, 10 is max 
-  Serial.println("test"); // this is not getting printed
-
+  emic.setVolume(9); //sets the vloume, 10 is max 
 }
 
 
@@ -28,5 +26,6 @@ void playFact(String fact) {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //playFact("Hello World");
+  playFact("Hello World");
+  delay(25000);
 }
