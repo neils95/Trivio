@@ -19,7 +19,7 @@ int16_t ax, ay, az;           // current acceleration values
 
 int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
-int32_t threshold = 12000;      // threshold for difference in acceleration
+int32_t threshold = 10000;      // threshold for difference in acceleration
 
 int16_t address = 0;          // address of next available space for fact storage
 const int maxFactSize = 140;  // maximum size of fact
@@ -134,8 +134,7 @@ void getFact() {
 
   // update fact address for next fact to be played
   factIndex++;
-  //playFact(fact);
-  playFact("this is a really long string and I don't know what else to say");
+  playFact(fact);
 }
 
 // Checks difference in acceleration for throw
