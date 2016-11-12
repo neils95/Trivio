@@ -1,7 +1,8 @@
+#include <SoftwareSerial.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
 #include "factgenerator.h"
-#include<Wire.h>
+#include <Wire.h>
 #include <EEPROM.h>
 #include "EMIC2.h"
 //need to add the emic 2 library
@@ -23,6 +24,30 @@ int32_t threshold = 25000;      // threshold for difference in acceleration
 int16_t address = 0;          // address of next available space for fact storage
 const int maxFactSize = 140;  // maximum size of fact
 int factIndex = 2;            // address of fact to play
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+
+  // initialize emic devices
+  emic.begin(rxpin, txpin);
+  emic.setVoice(8); //sets the voice, there are 9 types, 0 - 8
+  emic.setVolume(5); //sets the vloume, 10 is max 
+  
+  // initialize device
+  Serial.println("Initializing I2C devices...");
+  accelgyro.initialize();
+
+  // verify connection
+  testConnection();
+
+  Serial.print("EEPROM length: ");
+  Serial.println(EEPROM.length());
+  //clearEEPROM(); // clears fact storage
+
+  // read last address index stored
+  readAddress();
+}
 
 void clearEEPROM() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
@@ -54,35 +79,12 @@ void testConnection() {
 
   while (accelConnection == false) { // keep testing connection if failed
     accelConnection = accelgyro.testConnection();
+    delay(500);
   }
   Serial.println("MPU6050 connected");
 
   // set previous accelerations
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
-}
-
-void setup() {
-  Serial.begin(9600);
-  Wire.begin();
-
-  // initialize emic devices
-  emic.begin(rxpin, txpin);
-  emic.setVoice(8); //sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(10); //sets the vloume, 10 is max 
-  
-  // initialize device
-  Serial.println("Initializing I2C devices...");
-  accelgyro.initialize();
-
-  // verify connection
-  testConnection();
-
-  Serial.print("EEPROM length: ");
-  Serial.println(EEPROM.length());
-  //clearEEPROM(); // clears fact storage
-
-  // read last address index stored
-  readAddress();
 }
 
 // Caches fact when received from server
@@ -112,6 +114,7 @@ void cacheFactLocally(char* fact, int factLength) {
 
 // plays fact on TTS module
 void playFact(String fact) {
+  Serial.println(fact);
   emic.speak(fact);
     delay(1000); //adds a pause after 1 second
     ~emic;
@@ -168,14 +171,13 @@ void sampleAcceleration(int samples) {
 }
 
 void loop() {
-  checkAcceleration();
-  if (ax == 0 && ay == 0 && az == 0) testConnection();
-
+  //checkAcceleration();
+  //if (ax == 0 && ay == 0 && az == 0) testConnection();
+  //playFact("Hello World");
+  
   #ifdef GENERATEFACTS
     generateFacts();
   #endif
-  
-  delay(1000);
 }
 
 /*
