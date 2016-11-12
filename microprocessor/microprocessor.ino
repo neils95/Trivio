@@ -26,7 +26,7 @@ const int maxFactSize = 140;  // maximum size of fact
 int factIndex = 2;            // address of fact to play
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   Wire.begin();
 
   // initialize emic devices
