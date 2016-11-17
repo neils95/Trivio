@@ -7,7 +7,7 @@ const int maxFactSize = 140;
 
 // generate facts for testing purposes
 char factArray[][maxFactSize] = {
-  "The young kangaroo, or joey, is born alive at a very immature stage when it is only about 2 cm long and weighs less than a gram.",
+  //"The young kangaroo, or joey, is born alive at a very immature stage when it is only about 2 cm long and weighs less than a gram.",
   "Pteronophobia is the fear of being tickled by feathers!",
   "A flock of crows is known as a murder.",
   "Cherophobia is the fear of fun.",
@@ -15,8 +15,8 @@ char factArray[][maxFactSize] = {
   "You cannot snore and dream at the same time.",
   "Recycling one glass jar saves enough energy to watch TV for 3 hours.",
   "The Titanic was the first ship to use the SOS signal.",
-  /*"J.K. Rowling chose the unusual name ‘Hermione’ so young girls wouldn’t be teased for being nerdy!",
   "In the Caribbean there are oysters that can climb trees.",
+  /*"J.K. Rowling chose the unusual name ‘Hermione’ so young girls wouldn’t be teased for being nerdy!",
   "A duel between three people is actually called a truel.",
   "The television was invented only two years after the invention of sliced bread.",
   "Alligators will give manatees the right of way if they are swimming near each other.",
