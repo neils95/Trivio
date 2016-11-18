@@ -9,21 +9,22 @@
 
 #define rxpin 4
 #define txpin 5
+int16_t startingAddress = 4;
 
 // uncomment if need to generate facts for testing purposes
-// #define GENERATEFACTS
+//#define GENERATEFACTS
 
 EMIC2 emic;
 MPU6050 accelgyro;
-int16_t ax, ay, az;           // current acceleration values
+int16_t ax, ay, az;             // current acceleration values
 
 int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
 int32_t threshold = 10000;      // threshold for difference in acceleration
 
-int16_t address = 0;          // address of next available space for fact storage
-const int maxFactSize = 140;  // maximum size of fact
-int factIndex = 2;            // address of fact to play
+int16_t address = 0;              // address of next available space for fact storage
+const int maxFactSize = 140;      // maximum size of fact
+int factIndex = startingAddress;  // address of fact to play
 
 void setup() {
   Serial.begin(9600);
@@ -44,33 +45,57 @@ void setup() {
 
   Serial.print("EEPROM length: ");
   Serial.println(EEPROM.length());
-  //clearEEPROM(); // clears fact storage
+  //resetEEPROM(); // clears fact storage
 
   // read last address index stored
   readAddress();
+  // read next address after last fact played
+  readFactIndex();
 }
 
-void clearEEPROM() {
+// clears EEPROM and resets starting address
+void resetEEPROM() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
+  address = startingAddress;
+  factIndex = startingAddress;
+  writeAddress();
+  writeFactIndex();
+  Serial.println("EEPROM reset");
 }
 
-// breaks up 16 bit address to store into EEPROM
+// breaks up 16 bit address to store into EEPROM (little endian)
 void writeAddress() {
   int lower_8bits = address & 0xff;
   int upper_8bits = (address >> 8) & 0xff;
   EEPROM.write(0, lower_8bits);
   EEPROM.write(1, upper_8bits);
-  //printDebugging(2);
+  printDebugging(2);
 }
 
-// reads 16 bit address from EEPROM
+// reads 16 bit address from EEPROM (little endian)
 void readAddress() {
   int lower_8bits = EEPROM.read(0);
   int upper_8bits = EEPROM.read(1);
   address = (upper_8bits << 8) | lower_8bits;
-  //printDebugging(3);
+  printDebugging(3);
+}
+
+// reads last factIndex from EEPROM (little endian)
+void writeFactIndex() {
+  int lower_8bits = factIndex & 0xff;
+  int upper_8bits = (factIndex >> 8) & 0xff;
+  EEPROM.write(2, lower_8bits);
+  EEPROM.write(3, upper_8bits);
+}
+
+// writes last factIndex address to EEPROM (little endian)
+void readFactIndex() {
+  int lower_8bits = EEPROM.read(2);
+  int upper_8bits = EEPROM.read(3);
+  factIndex = (upper_8bits << 8) | lower_8bits;
+  Serial.println(factIndex);
 }
 
 void testConnection() {
@@ -90,10 +115,11 @@ void testConnection() {
 
 // Caches fact when received from server
 void cacheFactLocally(char* fact, int factLength) {
-  if (address == 0) address = 1; // fact storage address starts at 2
+  if (address <= startingAddress) address = startingAddress - 1; // fact storage address starts at 4
 
   if ( (address + factLength) > EEPROM.length()) { // EEPROM memory does not have enough room to store fact
     Serial.println("Memory full. Can't cache fact");
+    return;
   }
   else {
     if (strlen(fact) < maxFactSize) { // fact does not exceed max fact size
@@ -101,9 +127,10 @@ void cacheFactLocally(char* fact, int factLength) {
       for (int i = 0; i <= factLength; i++) {
         address++;
         EEPROM.write(address, fact[i]);
+        Serial.print(fact[i]);
         if (fact[i] == '\0') break; // end of fact string
       }
-      
+      Serial.println();
       // update address for next stored fact
       writeAddress();
     } 
@@ -121,11 +148,16 @@ void playFact(String fact) {
 
 // get fact when shake or throw is detected
 void getFact() {
+  if(factIndex == startingAddress && address == startingAddress) {
+    Serial.println("No facts in cache");
+    return;
+  }
   // reset factIndex if all facts have been played
-  if (factIndex >= address) factIndex = 2;
+  if (factIndex < startingAddress) factIndex = startingAddress;
+  if (factIndex >= address) factIndex = startingAddress;
 
   String fact;
-  //printDebugging(4);
+  printDebugging(4);
   // read fact from EEPROM
   while (EEPROM.read(factIndex) != '\0') {
     fact += (char)EEPROM.read(factIndex);
@@ -134,6 +166,7 @@ void getFact() {
 
   // update fact address for next fact to be played
   factIndex++;
+  writeFactIndex();
   playFact(fact);
 }
 
@@ -172,6 +205,7 @@ void loop() {
   
   #ifdef GENERATEFACTS
     generateFacts();
+    delay(3000);
   #endif
 }
 
@@ -222,7 +256,7 @@ void loop() {
     for( int i = 0; i < factNum; i++) {
       factGenerator.getFact(i, fact);
       cacheFactLocally(fact, strlen(fact));
-      delay(2000);
+      delay(5000);
     }
   }
 #endif
