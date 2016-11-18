@@ -9,10 +9,10 @@
 
 #define rxpin 4
 #define txpin 5
-#define startingAddress 2
+int16_t startingAddress = 4;
 
 // uncomment if need to generate facts for testing purposes
-// #define GENERATEFACTS
+//#define GENERATEFACTS
 
 EMIC2 emic;
 MPU6050 accelgyro;
@@ -55,11 +55,14 @@ void setup() {
 
 // clears EEPROM and resets starting address
 void resetEEPROM() {
-  address = startingAddress;
-  writeAddress();
   for (int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
+  address = startingAddress;
+  factIndex = startingAddress;
+  writeAddress();
+  writeFactIndex();
+  Serial.println("EEPROM reset");
 }
 
 // breaks up 16 bit address to store into EEPROM (little endian)
@@ -68,7 +71,7 @@ void writeAddress() {
   int upper_8bits = (address >> 8) & 0xff;
   EEPROM.write(0, lower_8bits);
   EEPROM.write(1, upper_8bits);
-  //printDebugging(2);
+  printDebugging(2);
 }
 
 // reads 16 bit address from EEPROM (little endian)
@@ -76,7 +79,7 @@ void readAddress() {
   int lower_8bits = EEPROM.read(0);
   int upper_8bits = EEPROM.read(1);
   address = (upper_8bits << 8) | lower_8bits;
-  //printDebugging(3);
+  printDebugging(3);
 }
 
 // reads last factIndex from EEPROM (little endian)
@@ -92,6 +95,7 @@ void readFactIndex() {
   int lower_8bits = EEPROM.read(2);
   int upper_8bits = EEPROM.read(3);
   factIndex = (upper_8bits << 8) | lower_8bits;
+  Serial.println(factIndex);
 }
 
 void testConnection() {
@@ -111,10 +115,11 @@ void testConnection() {
 
 // Caches fact when received from server
 void cacheFactLocally(char* fact, int factLength) {
-  if (address == 0) address = startingAddress - 1; // fact storage address starts at 2
+  if (address <= startingAddress) address = startingAddress - 1; // fact storage address starts at 4
 
   if ( (address + factLength) > EEPROM.length()) { // EEPROM memory does not have enough room to store fact
     Serial.println("Memory full. Can't cache fact");
+    return;
   }
   else {
     if (strlen(fact) < maxFactSize) { // fact does not exceed max fact size
@@ -122,9 +127,10 @@ void cacheFactLocally(char* fact, int factLength) {
       for (int i = 0; i <= factLength; i++) {
         address++;
         EEPROM.write(address, fact[i]);
+        Serial.print(fact[i]);
         if (fact[i] == '\0') break; // end of fact string
       }
-      
+      Serial.println();
       // update address for next stored fact
       writeAddress();
     } 
@@ -142,11 +148,16 @@ void playFact(String fact) {
 
 // get fact when shake or throw is detected
 void getFact() {
+  if(factIndex == startingAddress && address == startingAddress) {
+    Serial.println("No facts in cache");
+    return;
+  }
   // reset factIndex if all facts have been played
+  if (factIndex < startingAddress) factIndex = startingAddress;
   if (factIndex >= address) factIndex = startingAddress;
 
   String fact;
-  //printDebugging(4);
+  printDebugging(4);
   // read fact from EEPROM
   while (EEPROM.read(factIndex) != '\0') {
     fact += (char)EEPROM.read(factIndex);
@@ -194,6 +205,7 @@ void loop() {
   
   #ifdef GENERATEFACTS
     generateFacts();
+    delay(3000);
   #endif
 }
 
@@ -244,7 +256,7 @@ void loop() {
     for( int i = 0; i < factNum; i++) {
       factGenerator.getFact(i, fact);
       cacheFactLocally(fact, strlen(fact));
-      delay(2000);
+      delay(5000);
     }
   }
 #endif
