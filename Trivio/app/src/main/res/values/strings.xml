@@ -1,3 +1,26 @@
 <resources>
     <string name="app_name">Trivio</string>
+    <string name="title_activity_login">Sign in</string>
+
+    <!-- Strings related to menu pages -->
+    <string name="manage_wifi">Manage Wifi</string>
+    <string name="pick_category">Pick a Category</string>
+    <string name="view_history">View Fact History</string>
+
+    <!-- Strings related to Wifi menu -->
+    <string name="view_saved_wifi">View saved networks</string>
+    <string name="connect_wifi">Choose Network Connection</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password (optional)</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
 </resources>
