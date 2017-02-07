@@ -25,13 +25,13 @@ public class MenuActivity extends AppCompatActivity {
 
     /** Called when the user clicks the viewFactHistory button */
     public void startFactHistoryIntent(View view) {
-        Intent intent = new Intent(this, ViewFactActivity.class);
+        Intent intent = new Intent(this, FactHistoryActivity.class);
         startActivity(intent);
     }
 
     /** Called when the user clicks the pickCategory button */
     public void startPickCategoryIntent(View view) {
-        Intent intent = new Intent(this, ManageWifiActivity.class);
+        Intent intent = new Intent(this, CategoryActivity.class);
         startActivity(intent);
     }
 }

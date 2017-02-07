@@ -9,5 +9,8 @@
         android:layout_height="wrap_content"
         android:background="@color/colorWhite"
         android:padding="10dp"
-        android:id="@+id/factItem" />
+        android:layout_marginBottom="10dp"
+        android:textAlignment="center"
+        android:id="@+id/categoryItem" />
+
 </LinearLayout>

@@ -10,6 +10,11 @@
     <!-- Strings related to Wifi menu -->
     <string name="view_saved_wifi">View saved networks</string>
     <string name="connect_wifi">Choose Network Connection</string>
+    <string name="no_networks">No Networks Detected.</string>
+
+    <!-- Strings related to History page -->
+    <string name="fact_history">Fact History</string>
+    <string name="no_facts">No facts to display.</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>

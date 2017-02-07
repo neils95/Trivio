@@ -16,9 +16,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerHorizontal="true"
+        android:padding="10dp"
         android:background="@color/colorWhite"
         android:id="@+id/factText"
-        android:layout_above="@+id/downVoteButton" />
+        android:layout_above="@+id/downVoteButton"
+        android:textSize="24sp" />
 
     <ImageButton
         app:srcCompat="@drawable/ic_action_thumbs_down"
@@ -32,7 +34,7 @@
         android:id="@+id/downVoteButton" />
 
     <ImageButton
-        app:srcCompat="@drawable/ic_action_thumbs_up_light"
+        app:srcCompat="@drawable/ic_action_thumbs_up"
         android:background="@color/colorBackground"
         android:scaleType="fitCenter"
         android:id="@+id/upVoteButton"
