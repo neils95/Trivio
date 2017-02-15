@@ -271,21 +271,14 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201702150948270_InitializedModels.cs" />
-    <Compile Include="Migrations\201702150948270_InitializedModels.Designer.cs">
-      <DependentUpon>201702150948270_InitializedModels.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201702151003420_RemoveCategoryFromTrivia.cs" />
-    <Compile Include="Migrations\201702151003420_RemoveCategoryFromTrivia.Designer.cs">
-      <DependentUpon>201702151003420_RemoveCategoryFromTrivia.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201702151006079_PopulateFirstTenTrivia.cs" />
-    <Compile Include="Migrations\201702151006079_PopulateFirstTenTrivia.Designer.cs">
-      <DependentUpon>201702151006079_PopulateFirstTenTrivia.cs</DependentUpon>
+    <Compile Include="Migrations\201702151053002_ReinitializedModels.cs" />
+    <Compile Include="Migrations\201702151053002_ReinitializedModels.Designer.cs">
+      <DependentUpon>201702151053002_ReinitializedModels.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\ApplicationDbContext.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Trivia.cs" />
     <Compile Include="Models\Category.cs" />
@@ -370,14 +363,8 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201702150948270_InitializedModels.resx">
-      <DependentUpon>201702150948270_InitializedModels.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201702151003420_RemoveCategoryFromTrivia.resx">
-      <DependentUpon>201702151003420_RemoveCategoryFromTrivia.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201702151006079_PopulateFirstTenTrivia.resx">
-      <DependentUpon>201702151006079_PopulateFirstTenTrivia.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201702151053002_ReinitializedModels.resx">
+      <DependentUpon>201702151053002_ReinitializedModels.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
