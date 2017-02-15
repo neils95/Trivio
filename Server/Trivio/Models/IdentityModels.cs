@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
+using System.Data.Entity;
 
 namespace Trivio.Models
 {
@@ -20,7 +21,11 @@ namespace Trivio.Models
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext()
+		
+		 public DbSet<User> Users { get; set; }
+		public DbSet<Trivia> Trivia { get; set; }
+
+		public ApplicationDbContext()
             : base("DefaultConnection", throwIfV1Schema: false)
         {
         }
@@ -29,7 +34,6 @@ namespace Trivio.Models
         {
             return new ApplicationDbContext();
         }
-
-		public System.Data.Entity.DbSet<Trivio.Models.Trivia> Trivias { get; set; }
+		
 	}
 }
