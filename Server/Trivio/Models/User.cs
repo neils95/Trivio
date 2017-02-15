@@ -18,14 +18,14 @@ namespace Trivio.Models
 		public int Token { get; set; }
 		
 		//Ids of trivia history for user
-		public ICollection<int> TrivaHistory { get; set; }
+		public ICollection<Trivia> TrivaHistory { get; set; }
 
 		//Number of facts user has already downloaded
 		public int TriviaCount { get; set; }
 
 		public User()
 		{
-			TrivaHistory = new List<int>();
+			TrivaHistory = new List<Trivia>();
 		}
 	}
 }

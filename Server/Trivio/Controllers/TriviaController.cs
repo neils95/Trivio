@@ -49,7 +49,7 @@ namespace Trivio.Controllers
 				{
 					
 					//Add that TriviaId to user history.
-					User.TrivaHistory.Add(NewTriviaId);
+					User.TrivaHistory.Add(NewTrivia);
 
 					//Return new trivia for User
 					return new HttpResponseMessage()
@@ -70,9 +70,9 @@ namespace Trivio.Controllers
 
 		}
 
-
-
 		//POST Trivia/{UserId}/{Count}
+
+
 		// PUT Trivia/Vote
 
 

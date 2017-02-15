@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceConfiguration serviceName="Trivio.Azure1" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2015-04.2.6">
+  <Role name="Trivio">
+    <Instances count="1" />
+    <ConfigurationSettings>
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="DefaultEndpointsProtocol=https;AccountName=trivio;AccountKey=$(_trivio.key_)" />
+      <Setting name="APPINSIGHTS_INSTRUMENTATIONKEY" value="4456db42-0b7a-43dc-98b8-93bc6565c6e0" />
+    </ConfigurationSettings>
+  </Role>
+</ServiceConfiguration>
