@@ -47,9 +47,19 @@ namespace Trivio.Controllers
 				//Check if end of all facts in username
 				if (NewTrivia != null)
 				{
-					
-					//Add that TriviaId to user history.
-					User.TrivaHistory.Add(NewTrivia);
+
+					//Create TriviaHistoryModel
+					var TriviaHistoryModel = new TriviaHistoryModel() { 
+						UserVote =0,
+						Trivia = NewTrivia,
+						TriviaId = NewTrivia.Id,
+						User = User,
+						UserId = User.Id
+					};
+
+					//Create association with User and Fact
+					User.TrivaHistory.Add(TriviaHistoryModel);
+					NewTrivia.UserHistory.Add(TriviaHistoryModel);
 
 					//Return new trivia for User
 					return new HttpResponseMessage()

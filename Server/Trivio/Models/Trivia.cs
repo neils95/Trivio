@@ -16,6 +16,8 @@ namespace Trivio.Models
 		public Category Category { get; set; }
 		public byte CategoryId { get; set; }
 
+		//Foreign key
+		public ICollection<TriviaHistoryModel> UserHistory { get; set; } = new List<TriviaHistoryModel>();
 
 	}
 }
