@@ -275,6 +275,14 @@
     <Compile Include="Migrations\201702150948270_InitializedModels.Designer.cs">
       <DependentUpon>201702150948270_InitializedModels.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201702151003420_RemoveCategoryFromTrivia.cs" />
+    <Compile Include="Migrations\201702151003420_RemoveCategoryFromTrivia.Designer.cs">
+      <DependentUpon>201702151003420_RemoveCategoryFromTrivia.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201702151006079_PopulateFirstTenTrivia.cs" />
+    <Compile Include="Migrations\201702151006079_PopulateFirstTenTrivia.Designer.cs">
+      <DependentUpon>201702151006079_PopulateFirstTenTrivia.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -364,6 +372,12 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\201702150948270_InitializedModels.resx">
       <DependentUpon>201702150948270_InitializedModels.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201702151003420_RemoveCategoryFromTrivia.resx">
+      <DependentUpon>201702151003420_RemoveCategoryFromTrivia.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201702151006079_PopulateFirstTenTrivia.resx">
+      <DependentUpon>201702151006079_PopulateFirstTenTrivia.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

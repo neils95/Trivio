@@ -231,3 +231,5 @@ C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debu
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.pdb
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.InitializedModels.resources
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.csproj.GenerateResource.Cache
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.RemoveCategoryFromTrivia.resources
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.PopulateFirstTenTrivia.resources
