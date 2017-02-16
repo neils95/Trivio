@@ -8,8 +8,6 @@ import android.widget.Button;
 
 public class MenuActivity extends AppCompatActivity {
 
-    Button manageWifiButton;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +17,7 @@ public class MenuActivity extends AppCompatActivity {
 
     /** Called when the user clicks the manageWifi button */
     public void startManageWifiIntent(View view) {
-        Intent intent = new Intent(this, ManageWifiActivity.class);
+        Intent intent = new Intent(this, CheckPhoneConnectionActivity.class);
         startActivity(intent);
     }
 

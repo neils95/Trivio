@@ -6,8 +6,6 @@ import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Boolean isLoggedIn = true;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -17,13 +15,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loginRedirect() {
-        if(isLoggedIn) {
-            // redirect to main menu
-            Intent intent = new Intent(this, MenuActivity.class);
+        if(SaveSharedPreferences.getUserName(MainActivity.this).length() == 0)
+        {
+            // call Login Activity
+            Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
         }
-        else {
-            Intent intent = new Intent(this, LoginActivity.class);
+        else
+        {
+            // redirect to main menu
+            Intent intent = new Intent(this, MenuActivity.class);
             startActivity(intent);
         }
     }

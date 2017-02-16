@@ -29,11 +29,20 @@ public class ManageWifiActivity extends AppCompatActivity {
     private WifiReceiver wifiReceiver;
     private WifiManager wifiManager;
     private View mProgressView;
+    private ScanResult selectedWifi;
+    private String WIFI_PARCEL = "WIFI_PARCEL";
+
+    private String address;
+    private int port;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_wifi);
+
+        Bundle bundle = getIntent().getExtras();
+        address = bundle.getString(CheckPhoneConnectionActivity.ADDRESS_PARCEL);
+        port = bundle.getInt(CheckPhoneConnectionActivity.PORT_PARCEL);
 
         mProgressView = findViewById(R.id.wifi_progress);
         showProgress(true);
@@ -42,13 +51,12 @@ public class ManageWifiActivity extends AppCompatActivity {
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        if(wifiManager.isWifiEnabled() == false) {
+        if(!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }
 
         wifiReceiver = new WifiReceiver();
         registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-        //wifiManager.startScan();
         getWifi();
     }
 
@@ -60,6 +68,18 @@ public class ManageWifiActivity extends AppCompatActivity {
     protected void onResume() {
         registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         super.onResume();
+    }
+
+    /** Called when the user clicks the connectWifi button */
+    public void selectWifiNetwork(View view) {
+        if (selectedWifi != null) {
+            // start intent for wifi connection
+            Intent intent = new Intent(this, WifiConnectActivity.class);
+            intent.putExtra(WIFI_PARCEL, selectedWifi);
+            intent.putExtra(CheckPhoneConnectionActivity.ADDRESS_PARCEL, address);
+            intent.putExtra(CheckPhoneConnectionActivity.PORT_PARCEL, port);
+            startActivity(intent);
+        }
     }
 
     // Broadcast receiver class called its receive method
@@ -88,11 +108,9 @@ public class ManageWifiActivity extends AppCompatActivity {
         wifiListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position,
-                                    long id) {/*
-                Intent intent = new Intent(FactHistoryActivity.this, ViewFactActivity.class);
-                FactItem factItem = (FactItem) factHistoryList.getItemAtPosition(position);
-                intent.putExtra(FACT_PARCEL, factItem);
-                startActivity(intent);*/
+                                    long id) {
+                selectedWifi = (ScanResult) wifiListView.getItemAtPosition(position);
+                selectWifiNetwork(view);
             }
         });
     }
@@ -122,9 +140,9 @@ public class ManageWifiActivity extends AppCompatActivity {
     }
 
 
-        /**
-         * Shows the progress UI and hides the login form.
-         */
+    /**
+     * Shows the progress UI and hides the login form.
+     */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     private void showProgress(final boolean show) {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow

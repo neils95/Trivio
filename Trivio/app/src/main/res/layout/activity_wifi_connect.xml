@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_wifi_connect"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.triviathrowtoy.trivio.WifiConnectActivity">
+
+    <TextView
+        android:id="@+id/connectingWifi"
+        style="@style/TrivioHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/connecting_wifi"
+        android:paddingBottom="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <ProgressBar
+        android:id="@+id/wifi_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/connectingWifi"
+        android:layout_marginBottom="8dp"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/wifiName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/connecting_wifi"
+        android:layout_marginTop="10dp"
+        android:layout_below="@id/connectingWifi"
+        android:layout_centerHorizontal="true" />
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/wifiName">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:layout_marginTop="20dp"
+            android:hint="@string/prompt_password"
+            android:ems="10"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/wifiPassword" />
+
+        <Button
+            android:text="@string/connect"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_below="@+id/wifiPassword"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/sendConnect"
+            android:onClick="sendConnection"/>
+
+        <ProgressBar
+            android:id="@+id/connect_toy_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/wifiName"
+            android:layout_marginBottom="8dp"
+            android:layout_centerHorizontal="true"
+            android:visibility="gone" />
+    </android.support.design.widget.TextInputLayout>
+
+
+</RelativeLayout>
