@@ -13,6 +13,7 @@
     <string name="no_networks">No Networks Detected.</string>
     <string name="connecting_wifi">Connecting to Wifi</string>
     <string name="connect_phone">Connect to Toy\'s Wifi</string>
+    <string name="waiting_connection">Waiting for connection…</string>
     <string name="connect_instructions">First, go to the phone wifi menu and connect to the Trivia WiFi network.</string>
     <string name="Next">Next</string>
     <string name="connect">Connect</string>

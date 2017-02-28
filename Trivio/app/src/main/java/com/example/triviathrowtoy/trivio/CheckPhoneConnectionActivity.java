@@ -208,8 +208,8 @@ public class CheckPhoneConnectionActivity extends AppCompatActivity {
 
                     OutputStream outputStream = socket.getOutputStream();
                     Log.d("OUTPUT_STREAM", "Writing to socket output stream.");
-                    for(int i = 0; i < 100; i++) {
-                        outputStream.write((byte)12);
+                    for(int i = 0; i < 1000; i++) {
+                        outputStream.write(12);
                         outputStream.flush();
                     }
 

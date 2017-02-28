@@ -73,7 +73,7 @@ public class WifiConnectActivity extends AppCompatActivity {
     /** Called when the user clicks the connect button */
     public void sendConnection(View view) {
         if(checkPhoneConnection()) {
-            String password = passwordInput.getText().toString();
+            //String password = passwordInput.getText().toString();
             String SSID = selectedWifi.SSID;
             // open socket to send credentials
             showProgress(true);

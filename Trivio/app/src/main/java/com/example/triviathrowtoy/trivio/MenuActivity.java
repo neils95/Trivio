@@ -17,7 +17,7 @@ public class MenuActivity extends AppCompatActivity {
 
     /** Called when the user clicks the manageWifi button */
     public void startManageWifiIntent(View view) {
-        Intent intent = new Intent(this, CheckPhoneConnectionActivity.class);
+        Intent intent = new Intent(this, ManageWifiActivity.class);
         startActivity(intent);
     }
 

@@ -16,7 +16,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -30,7 +32,17 @@ public class ManageWifiActivity extends AppCompatActivity {
     private WifiManager wifiManager;
     private View mProgressView;
     private ScanResult selectedWifi;
-    private String WIFI_PARCEL = "WIFI_PARCEL";
+//    private String WIFI_PARCEL = "WIFI_PARCEL";
+
+    //Views
+    RelativeLayout phoneConnectionActivity;
+    RelativeLayout manageWifiActivity;
+    RelativeLayout credentialActivity;
+    RelativeLayout successActivity;
+
+    // Phone Connection Activity
+    private TextView waitingTextView;
+    Server server;
 
     private String address;
     private int port;
@@ -39,10 +51,29 @@ public class ManageWifiActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_wifi);
+        phoneConnectionActivity = (RelativeLayout)findViewById(R.id.phoneConnectionActivity);
+        manageWifiActivity = (RelativeLayout)findViewById(R.id.manageWifiActivity);
+        credentialActivity = (RelativeLayout)findViewById(R.id.credentialActivity);
+        successActivity = (RelativeLayout)findViewById(R.id.successStatusActivity);
+//
+//        Bundle bundle = getIntent().getExtras();
+//        address = bundle.getString(CheckPhoneConnectionActivity.ADDRESS_PARCEL);
+//        port = bundle.getInt(CheckPhoneConnectionActivity.PORT_PARCEL);
+//        setScanWifiActivity();
 
-        Bundle bundle = getIntent().getExtras();
-        address = bundle.getString(CheckPhoneConnectionActivity.ADDRESS_PARCEL);
-        port = bundle.getInt(CheckPhoneConnectionActivity.PORT_PARCEL);
+        setCheckPhoneConnection();
+    }
+
+    public void setCheckPhoneConnection() {
+        mProgressView = findViewById(R.id.connect_phone_progress);
+        waitingTextView = (TextView)findViewById(R.id.waitingConnection);
+
+        checkPhoneConnection();
+    }
+
+    public void setScanWifiActivity(View view) {
+        phoneConnectionActivity.setVisibility(View.GONE);
+        manageWifiActivity.setVisibility(View.VISIBLE);
 
         mProgressView = findViewById(R.id.wifi_progress);
         showProgress(true);
@@ -60,25 +91,75 @@ public class ManageWifiActivity extends AppCompatActivity {
         getWifi();
     }
 
+    public void setCredentialActivity() {
+        manageWifiActivity.setVisibility(View.GONE);
+        credentialActivity.setVisibility(View.VISIBLE);
+    }
+
+    /** Called when the user clicks the connect button */
+    public void sendConnection(View view) {
+        showProgress(true);
+        server.sendCredentials(selectedWifi.SSID,"pw");
+    }
+
+    private void checkPhoneConnection() {
+        showProgress(true);
+        server = new Server(this);
+    }
+
+    public void setNextButton() {
+        Button nextButton = (Button)findViewById(R.id.nextButton);
+        waitingTextView.setVisibility(View.INVISIBLE);
+        nextButton.setEnabled(true);
+        nextButton.setTextColor(getResources().getColor(R.color.colorTextPrimary));
+        showProgress(false);
+    }
+
+    public void setSuccess(Boolean success) {
+        showProgress(false);
+        credentialActivity.setVisibility(View.GONE);
+        successActivity.setVisibility(View.VISIBLE);
+        TextView statusText = (TextView)findViewById(R.id.connectStatus);
+        if(success) {
+            statusText.setText(R.string.successful_connect);
+        }
+    }
+
+    @Override
     protected void onPause() {
-        unregisterReceiver(wifiReceiver);
+        if(wifiReceiver != null) {
+            unregisterReceiver(wifiReceiver);
+        }
         super.onPause();
     }
 
+    @Override
     protected void onResume() {
         registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         super.onResume();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+//        if(server != null) {
+//            server.onDestroy();
+//        }
+        if(wifiReceiver != null) {
+            unregisterReceiver(wifiReceiver);
+        }
+    }
+
     /** Called when the user clicks the connectWifi button */
     public void selectWifiNetwork(View view) {
         if (selectedWifi != null) {
-            // start intent for wifi connection
-            Intent intent = new Intent(this, WifiConnectActivity.class);
-            intent.putExtra(WIFI_PARCEL, selectedWifi);
-            intent.putExtra(CheckPhoneConnectionActivity.ADDRESS_PARCEL, address);
-            intent.putExtra(CheckPhoneConnectionActivity.PORT_PARCEL, port);
-            startActivity(intent);
+//            // start intent for wifi connection
+//            Intent intent = new Intent(this, WifiConnectActivity.class);
+//            intent.putExtra(WIFI_PARCEL, selectedWifi);
+//            intent.putExtra(CheckPhoneConnectionActivity.ADDRESS_PARCEL, address);
+//            intent.putExtra(CheckPhoneConnectionActivity.PORT_PARCEL, port);
+//            startActivity(intent);
+            setCredentialActivity();
         }
     }
 

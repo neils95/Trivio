@@ -4,7 +4,11 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.SupplicantState;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +21,9 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import static android.net.wifi.SupplicantState.DISCONNECTED;
+import static android.net.wifi.SupplicantState.UNINITIALIZED;
 
 public class FactHistoryActivity extends AppCompatActivity {
 
@@ -44,6 +51,19 @@ public class FactHistoryActivity extends AppCompatActivity {
      * Requests fact history from server.
      */
     private void requestFacts() {
+
+        SupplicantState supplicantState;
+        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        supplicantState = wifiInfo.getSupplicantState();
+
+        if(supplicantState == DISCONNECTED || supplicantState == UNINITIALIZED) {
+            showProgress(false);
+            TextView noFacts = (TextView)findViewById(R.id.noFactsText);
+            noFacts.setVisibility(View.VISIBLE);
+            return;
+        }
+
 
         Log.d("ATTEMPT_REQUEST","Attempting get request.");
 
