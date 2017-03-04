@@ -171,21 +171,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201703032239403_Initial.cs" />
-    <Compile Include="Migrations\201703032239403_Initial.Designer.cs">
-      <DependentUpon>201703032239403_Initial.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201703032346025_MakeUserEmailAndTriviaTextUnique.cs" />
-    <Compile Include="Migrations\201703032346025_MakeUserEmailAndTriviaTextUnique.Designer.cs">
-      <DependentUpon>201703032346025_MakeUserEmailAndTriviaTextUnique.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201703032358147_MakeUserEmailAndTriviaTextUnique1.cs" />
-    <Compile Include="Migrations\201703032358147_MakeUserEmailAndTriviaTextUnique1.Designer.cs">
-      <DependentUpon>201703032358147_MakeUserEmailAndTriviaTextUnique1.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201703032359144_MakeUserEmailAndTriviaTextUnique2.cs" />
-    <Compile Include="Migrations\201703032359144_MakeUserEmailAndTriviaTextUnique2.Designer.cs">
-      <DependentUpon>201703032359144_MakeUserEmailAndTriviaTextUnique2.cs</DependentUpon>
+    <Compile Include="Migrations\201703040034217_Initialize.cs" />
+    <Compile Include="Migrations\201703040034217_Initialize.Designer.cs">
+      <DependentUpon>201703040034217_Initialize.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Trivia.cs" />
@@ -246,26 +234,17 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201703032239403_Initial.resx">
-      <DependentUpon>201703032239403_Initial.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201703032346025_MakeUserEmailAndTriviaTextUnique.resx">
-      <DependentUpon>201703032346025_MakeUserEmailAndTriviaTextUnique.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201703032358147_MakeUserEmailAndTriviaTextUnique1.resx">
-      <DependentUpon>201703032358147_MakeUserEmailAndTriviaTextUnique1.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201703032359144_MakeUserEmailAndTriviaTextUnique2.resx">
-      <DependentUpon>201703032359144_MakeUserEmailAndTriviaTextUnique2.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff" />
     <Content Include="fonts\glyphicons-halflings-regular.ttf" />
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <Content Include="packages.config" />
     <None Include="Project_Readme.html" />
     <Content Include="Scripts\jquery-1.10.2.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201703040034217_Initialize.resx">
+      <DependentUpon>201703040034217_Initialize.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
