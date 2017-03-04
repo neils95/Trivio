@@ -130,6 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Models\Dbo\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -173,6 +174,18 @@
     <Compile Include="Migrations\201703032239403_Initial.cs" />
     <Compile Include="Migrations\201703032239403_Initial.Designer.cs">
       <DependentUpon>201703032239403_Initial.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201703032346025_MakeUserEmailAndTriviaTextUnique.cs" />
+    <Compile Include="Migrations\201703032346025_MakeUserEmailAndTriviaTextUnique.Designer.cs">
+      <DependentUpon>201703032346025_MakeUserEmailAndTriviaTextUnique.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201703032358147_MakeUserEmailAndTriviaTextUnique1.cs" />
+    <Compile Include="Migrations\201703032358147_MakeUserEmailAndTriviaTextUnique1.Designer.cs">
+      <DependentUpon>201703032358147_MakeUserEmailAndTriviaTextUnique1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201703032359144_MakeUserEmailAndTriviaTextUnique2.cs" />
+    <Compile Include="Migrations\201703032359144_MakeUserEmailAndTriviaTextUnique2.Designer.cs">
+      <DependentUpon>201703032359144_MakeUserEmailAndTriviaTextUnique2.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Trivia.cs" />
@@ -235,6 +248,15 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\201703032239403_Initial.resx">
       <DependentUpon>201703032239403_Initial.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201703032346025_MakeUserEmailAndTriviaTextUnique.resx">
+      <DependentUpon>201703032346025_MakeUserEmailAndTriviaTextUnique.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201703032358147_MakeUserEmailAndTriviaTextUnique1.resx">
+      <DependentUpon>201703032358147_MakeUserEmailAndTriviaTextUnique1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201703032359144_MakeUserEmailAndTriviaTextUnique2.resx">
+      <DependentUpon>201703032359144_MakeUserEmailAndTriviaTextUnique2.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
