@@ -50,3 +50,5 @@ C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debu
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.pdb
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.Initialize.resources
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.csproj.GenerateResource.Cache
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\AutoMapper.dll
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\AutoMapper.xml

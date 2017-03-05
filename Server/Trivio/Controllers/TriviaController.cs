@@ -18,8 +18,12 @@ namespace Trivio.Controllers
     {
         private TrivioContext db = new TrivioContext();
 
-        // GET: api/Trivia
-        public IQueryable<Trivia> GetTrivias()
+		//GET: Trivia/{UserId}
+		//POST: Trivia/{UserId}/{Count}
+		//PUT: Trivia/Vote
+
+		// GET: api/Trivia
+		public IQueryable<Trivia> GetTrivias()
         {
             return db.Trivias;
         }
@@ -103,9 +107,6 @@ namespace Trivio.Controllers
             return Ok(trivia);
         }
 
-		//GET: Trivia/{UserId}
-		//POST: Trivia/{UserId}/{Count}
-		//PUT: Trivia/Vote
 
         protected override void Dispose(bool disposing)
         {

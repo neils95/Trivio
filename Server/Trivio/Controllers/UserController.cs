@@ -1,4 +1,6 @@
-﻿using System;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
@@ -10,6 +12,7 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Description;
 using Trivio.Models;
+using Trivio.Models.DTOs;
 
 namespace Trivio.Controllers
 {
@@ -18,14 +21,58 @@ namespace Trivio.Controllers
     {
         private TrivioContext db = new TrivioContext();
 
-		//POST: User/Register
-		//POST: User/Login
 		//GET: User/{userId}/History
 
+		//POST: User/Register
+		[HttpPost]
+		[Route("Register", Name = "RegisterUser")]
+		[ResponseType(typeof(UserPublicDTO))]
+		public async Task<IHttpActionResult> RegisterUser(UserRegistrationDTO newUser)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			//Add user to Db.
+			var user = Mapper.Map<User>(newUser);
+			try 
+			{
+				db.Users.Add(user);
+				await db.SaveChangesAsync();
+			}
+			catch {
+				return BadRequest(String.Format("Account with email {0} already exists",newUser.Email));
+			}
+
+			//Check Header for path to new resource
+			return CreatedAtRoute(
+				"RegisterUser", 
+				new { id = user.Id},
+				Mapper.Map<UserPublicDTO>(user)
+			);
+		}
+
+		//POST: User/Login
+		[HttpPost]
+		[Route("Login",Name ="LoginUser")]
+		[ResponseType(typeof(UserPublicDTO))]
+		public async Task<IHttpActionResult> LoginUser(UserLoginDTO user)
+		{
+			User existingUser = await db.Users.FirstOrDefaultAsync(x=>(x.Email==user.Email && x.Password==user.Password));
+			if (existingUser == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(Mapper.Map<UserPublicDTO>(existingUser));
+		}
+
+
 		// GET: Users
-		public IQueryable<User> GetUsers()
+		public IQueryable<UserPublicDTO> GetUsers()
         {
-            return db.Users;
+            return db.Users.ProjectTo<UserPublicDTO>();
         }
 
         // GET: Users/5
@@ -38,12 +85,11 @@ namespace Trivio.Controllers
                 return NotFound();
             }
 
-            return Ok(user);
+            return Ok(Mapper.Map<UserPublicDTO>(user));
         }
 
-        // PUT: Users/5
+        // PUT: User/5
         [ResponseType(typeof(void))]
-		//[Route("Register")]
         public async Task<IHttpActionResult> PutUser(int id, User user)
         {
             if (!ModelState.IsValid)
@@ -77,22 +123,8 @@ namespace Trivio.Controllers
             return StatusCode(HttpStatusCode.NoContent);
         }
 
-        // POST: Users
-        [ResponseType(typeof(User))]
-        public async Task<IHttpActionResult> PostUser(User user)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
 
-            db.Users.Add(user);
-            await db.SaveChangesAsync();
-
-            return CreatedAtRoute("DefaultApi", new { id = user.Id }, user);
-        }
-
-        // DELETE: api/Users/5
+        // DELETE: User/5
         [ResponseType(typeof(User))]
         public async Task<IHttpActionResult> DeleteUser(int id)
         {
@@ -107,8 +139,6 @@ namespace Trivio.Controllers
 
             return Ok(user);
         }
-
-
 		
         protected override void Dispose(bool disposing)
         {

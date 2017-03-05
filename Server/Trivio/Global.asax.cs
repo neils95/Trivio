@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Serialization;
+﻿using AutoMapper;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
+using Trivio.App_Start;
 
 namespace Trivio
 {
@@ -14,6 +16,9 @@ namespace Trivio
 	{
 		protected void Application_Start()
 		{
+			//Automapper initialization
+			Mapper.Initialize(c => c.AddProfile<MappingProfile>());
+
 			AreaRegistration.RegisterAllAreas();
 			GlobalConfiguration.Configure(WebApiConfig.Register);
 			FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
