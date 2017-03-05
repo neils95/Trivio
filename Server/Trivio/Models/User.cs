@@ -22,5 +22,7 @@ namespace Trivio.Models
 		//Number of facts user has already downloaded
 		public int TriviaCount { get; set; }
 
+		//Enable trivia history
+		public ICollection<UserTriviaHistory> TriviaHistory { get; set; }
 	}
 }

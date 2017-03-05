@@ -179,6 +179,10 @@
     <Compile Include="Migrations\201703040034217_Initialize.Designer.cs">
       <DependentUpon>201703040034217_Initialize.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201703052330211_AddManyToManyRelationship.cs" />
+    <Compile Include="Migrations\201703052330211_AddManyToManyRelationship.Designer.cs">
+      <DependentUpon>201703052330211_AddManyToManyRelationship.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\DTOs\UserLoginDTO.cs" />
     <Compile Include="Models\DTOs\UserPublicDTO.cs" />
@@ -252,6 +256,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\201703040034217_Initialize.resx">
       <DependentUpon>201703040034217_Initialize.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201703052330211_AddManyToManyRelationship.resx">
+      <DependentUpon>201703052330211_AddManyToManyRelationship.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

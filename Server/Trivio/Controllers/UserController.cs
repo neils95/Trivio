@@ -21,8 +21,6 @@ namespace Trivio.Controllers
     {
         private TrivioContext db = new TrivioContext();
 
-		//GET: User/{userId}/History
-
 		//POST: User/Register
 		[HttpPost]
 		[Route("Register", Name = "RegisterUser")]
@@ -68,6 +66,25 @@ namespace Trivio.Controllers
 			return Ok(Mapper.Map<UserPublicDTO>(existingUser));
 		}
 
+		//GET: User/History/{UserId}
+		[HttpGet]
+		[Route("History/{id}",Name ="UserTriviaHistory")]
+		public async Task<IHttpActionResult> GetUserTriviaHistory(int id)
+		{
+			//Check if User exists
+			User user = await db.Users.FindAsync(id);
+			if (user == null)
+			{
+				return BadRequest("Invalid UserId");
+			}
+
+			//Return
+			return Ok();
+		}
+
+
+
+		//----------------------------------------------------------------------------------
 
 		// GET: Users
 		public IQueryable<UserPublicDTO> GetUsers()
@@ -122,7 +139,6 @@ namespace Trivio.Controllers
 
             return StatusCode(HttpStatusCode.NoContent);
         }
-
 
         // DELETE: User/5
         [ResponseType(typeof(User))]
