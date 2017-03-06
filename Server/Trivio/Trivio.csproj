@@ -187,6 +187,10 @@
     <Compile Include="Migrations\201703060121248_RenamedUserActionToUserVote.Designer.cs">
       <DependentUpon>201703060121248_RenamedUserActionToUserVote.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201703060404299_AddTriviaHistoryCountToUser.cs" />
+    <Compile Include="Migrations\201703060404299_AddTriviaHistoryCountToUser.Designer.cs">
+      <DependentUpon>201703060404299_AddTriviaHistoryCountToUser.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\DTOs\UserLoginDTO.cs" />
     <Compile Include="Models\DTOs\UserPublicDTO.cs" />
@@ -267,6 +271,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201703060121248_RenamedUserActionToUserVote.resx">
       <DependentUpon>201703060121248_RenamedUserActionToUserVote.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201703060404299_AddTriviaHistoryCountToUser.resx">
+      <DependentUpon>201703060404299_AddTriviaHistoryCountToUser.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

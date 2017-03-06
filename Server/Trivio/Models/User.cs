@@ -9,10 +9,12 @@ namespace Trivio.Models
 {
 	public class User
 	{
+	
 		public int Id { get; set; }
 		public string Name { get; set; }
-		
-		[Required][StringLength(50)]
+
+		[Required]
+		[StringLength(50)]
 		[Index(IsUnique = true)]
 		public string Email { get; set; }
 
@@ -22,7 +24,7 @@ namespace Trivio.Models
 		//Number of facts user has already downloaded
 		public int TriviaCount { get; set; }
 
-		//Enable trivia history
-		//public ICollection<UserTriviaHistory> TriviaHistory { get; set; }
+		//Number of facts user has already heard
+		public int TriviaHistoryCount { get; set; }
 	}
 }

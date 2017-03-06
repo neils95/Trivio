@@ -22,8 +22,7 @@ namespace Trivio.Controllers
         private TrivioContext db = new TrivioContext();
 
 		//POST: User/Register
-		[HttpPost]
-		[Route("Register", Name = "RegisterUser")]
+		[HttpPost,Route("Register", Name = "RegisterUser")]
 		[ResponseType(typeof(UserPublicDTO))]
 		public async Task<IHttpActionResult> RegisterUser(UserRegistrationDTO newUser)
 		{
@@ -52,8 +51,7 @@ namespace Trivio.Controllers
 		}
 
 		//POST: User/Login
-		[HttpPost]
-		[Route("Login",Name ="LoginUser")]
+		[HttpPost,Route("Login",Name ="LoginUser")]
 		[ResponseType(typeof(UserPublicDTO))]
 		public async Task<IHttpActionResult> LoginUser(UserLoginDTO user)
 		{
@@ -94,7 +92,36 @@ namespace Trivio.Controllers
 			});
 		}
 
+		//PUT: User/History/{UserId}/{Count}
+		[HttpPut, Route("History/{userId}/{triviaCount}")]
+		[ResponseType(typeof(void))]
+		public async Task<IHttpActionResult> UpdateUserTriviaHistory(int userId, int triviaCount)
+		{
+			User user = await db.Users.FindAsync(userId);
 
+			//Check if triviacount is greater than the number of facts user has heard.
+			if (user == null || triviaCount < 1 || (user.TriviaHistoryCount + triviaCount > user.TriviaCount))
+			{
+				return BadRequest("Invalid User Id/Trivia Count must be a number");
+			}
+
+
+			for (int i = user.TriviaHistoryCount + 1; i <= user.TriviaHistoryCount + triviaCount; i++)
+			{
+				db.UserTriviaHistories.Add(new UserTriviaHistory
+					{
+						TriviaId = i,
+						UserId = userId,
+						UserVote = 0
+					}
+				);
+			}
+			user.TriviaHistoryCount+=triviaCount;
+
+
+			await db.SaveChangesAsync();
+			return Ok();
+		}
 
 		//----------------------------------------------------------------------------------
 
@@ -111,7 +138,7 @@ namespace Trivio.Controllers
             User user = await db.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return BadRequest("Invalid User Id");
             }
 
             return Ok(Mapper.Map<UserPublicDTO>(user));

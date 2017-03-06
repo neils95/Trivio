@@ -21,12 +21,26 @@ namespace Trivio.Controllers
         private TrivioContext db = new TrivioContext();
 
 		//GET: Trivia/{UserId}
+		[HttpGet,Route("{userId}")]
+		[ResponseType(typeof(string))]
+		public async Task <IHttpActionResult> GetTrivia(int userId)
+		{
+			User user = await db.Users.FindAsync(userId);
+			if (user == null)
+			{
+				return NotFound();
+			}
 
-		//POST: Trivia/{UserId}/{Count}
+			//Increment trivia count and return trivia at new row
+			string trivia = (await db.Trivias.FindAsync(++user.TriviaCount)).Text;
+
+			await db.SaveChangesAsync();
+
+			return Ok(trivia);
+		}
 
 		//PUT: Trivia/Vote
-		[HttpPut]
-		[Route("Vote/{id}")]
+		[HttpPut,Route("Vote/{id}")]
 		[ResponseType(typeof(void))]
 		public async Task<IHttpActionResult> VoteOnTrivia(int id, VoteDTO vote)
 		{
@@ -105,7 +119,7 @@ namespace Trivio.Controllers
 		}
 
 
-		//------------------------------------------------------------------------------
+		//---------------------------------------------------------------------------------------
 		// GET: api/Trivia
 		public IQueryable<Trivia> GetTrivias()
         {
@@ -113,18 +127,6 @@ namespace Trivio.Controllers
             return db.Trivias;
         }
 
-        // GET: api/Trivia/5
-        [ResponseType(typeof(Trivia))]
-        public async Task<IHttpActionResult> GetTrivia(int id)
-        {
-            Trivia trivia = await db.Trivias.FindAsync(id);
-            if (trivia == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(trivia);
-        }
 
         // PUT: api/Trivia/5
         [ResponseType(typeof(void))]

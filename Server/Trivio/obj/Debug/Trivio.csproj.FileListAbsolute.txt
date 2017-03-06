@@ -54,3 +54,4 @@ C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\Auto
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.AddManyToManyRelationship.resources
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.RenamedUserActionToUserVote.resources
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.csprojResolveAssemblyReference.cache
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.AddTriviaHistoryCountToUser.resources
