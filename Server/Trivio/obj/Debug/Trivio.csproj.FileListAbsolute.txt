@@ -47,11 +47,8 @@ C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\Syst
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\Antlr3.Runtime.pdb
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.dll
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.pdb
-C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.Initialize.resources
-C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.csproj.GenerateResource.Cache
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\AutoMapper.dll
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\AutoMapper.xml
-C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.AddManyToManyRelationship.resources
-C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.RenamedUserActionToUserVote.resources
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.csprojResolveAssemblyReference.cache
-C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.AddTriviaHistoryCountToUser.resources
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.Migrations.Initialize.resources
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Debug\Trivio.csproj.GenerateResource.Cache

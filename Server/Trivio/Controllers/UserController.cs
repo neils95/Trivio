@@ -126,7 +126,8 @@ namespace Trivio.Controllers
 		//----------------------------------------------------------------------------------
 
 		// GET: Users
-		public IQueryable<UserPublicDTO> GetUsers()
+		[HttpGet]
+		public IQueryable<UserPublicDTO> GetUser()
         {
             return db.Users.ProjectTo<UserPublicDTO>();
         }

@@ -175,21 +175,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201703040034217_Initialize.cs" />
-    <Compile Include="Migrations\201703040034217_Initialize.Designer.cs">
-      <DependentUpon>201703040034217_Initialize.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201703052330211_AddManyToManyRelationship.cs" />
-    <Compile Include="Migrations\201703052330211_AddManyToManyRelationship.Designer.cs">
-      <DependentUpon>201703052330211_AddManyToManyRelationship.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201703060121248_RenamedUserActionToUserVote.cs" />
-    <Compile Include="Migrations\201703060121248_RenamedUserActionToUserVote.Designer.cs">
-      <DependentUpon>201703060121248_RenamedUserActionToUserVote.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201703060404299_AddTriviaHistoryCountToUser.cs" />
-    <Compile Include="Migrations\201703060404299_AddTriviaHistoryCountToUser.Designer.cs">
-      <DependentUpon>201703060404299_AddTriviaHistoryCountToUser.cs</DependentUpon>
+    <Compile Include="Migrations\201703060633038_Initialize.cs" />
+    <Compile Include="Migrations\201703060633038_Initialize.Designer.cs">
+      <DependentUpon>201703060633038_Initialize.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\DTOs\UserLoginDTO.cs" />
@@ -263,17 +251,8 @@
     <Content Include="Scripts\jquery-1.10.2.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201703040034217_Initialize.resx">
-      <DependentUpon>201703040034217_Initialize.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201703052330211_AddManyToManyRelationship.resx">
-      <DependentUpon>201703052330211_AddManyToManyRelationship.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201703060121248_RenamedUserActionToUserVote.resx">
-      <DependentUpon>201703060121248_RenamedUserActionToUserVote.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201703060404299_AddTriviaHistoryCountToUser.resx">
-      <DependentUpon>201703060404299_AddTriviaHistoryCountToUser.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201703060633038_Initialize.resx">
+      <DependentUpon>201703060633038_Initialize.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

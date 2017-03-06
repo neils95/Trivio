@@ -48,5 +48,7 @@ C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\Enti
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\EntityFramework.SqlServer.dll
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\EntityFramework.xml
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\EntityFramework.SqlServer.xml
-C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Release\Trivio.Migrations.Initial.resources
 C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Release\Trivio.csproj.GenerateResource.Cache
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\AutoMapper.dll
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\bin\AutoMapper.xml
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\Trivio\obj\Release\Trivio.Migrations.Initialize.resources

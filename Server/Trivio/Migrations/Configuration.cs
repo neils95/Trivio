@@ -15,11 +15,6 @@ namespace Trivio.Migrations
 
         protected override void Seed(Trivio.Models.TrivioContext context)
         {
-			//  This method will be called after migrating to the latest version.
-
-			//  You can use the DbSet<T>.AddOrUpdate() helper extension method 
-			//  to avoid creating duplicate seed data. E.g.
-			//
 
 			context.Trivias.AddOrUpdate(x => x.Text,
 				new Trivia() { Text = "In Japan, letting a sumo wrestler make your baby cry is considered good luck." },
@@ -39,6 +34,6 @@ namespace Trivio.Migrations
 				new User { Name = "Neil Sanghrajka", Email = "neil@trivio.com", Password = "test1" },
 				new User { Name = "Urvashi Mohnani", Email = "urvashi@trivio.com", Password = "test2" }
 			);
-		}  
+		}
     }
 }

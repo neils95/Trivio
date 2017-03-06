@@ -41,7 +41,7 @@ namespace Trivio.Controllers
 
 		//PUT: Trivia/Vote
 		[HttpPut,Route("Vote/{id}")]
-		[ResponseType(typeof(void))]
+		[ResponseType(typeof(UserTriviaHistoryDTO))]
 		public async Task<IHttpActionResult> VoteOnTrivia(int id, VoteDTO vote)
 		{
 			if (!ModelState.IsValid)
@@ -123,49 +123,50 @@ namespace Trivio.Controllers
 		// GET: api/Trivia
 		public IQueryable<Trivia> GetTrivias()
         {
-			
             return db.Trivias;
         }
 
 
-        // PUT: api/Trivia/5
-        [ResponseType(typeof(void))]
-        public async Task<IHttpActionResult> PutTrivia(int id, Trivia trivia)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+		// PUT: api/Trivia/5
+		[ResponseType(typeof(void))]
+		public async Task<IHttpActionResult> PutTrivia(int id, Trivia trivia)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
 
-            if (id != trivia.Id)
-            {
-                return BadRequest();
-            }
-			
+			if (id != trivia.Id)
+			{
+				return BadRequest();
+			}
 
-            db.Entry(trivia).State = EntityState.Modified;
 
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TriviaExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+			db.Entry(trivia).State = EntityState.Modified;
 
-            return StatusCode(HttpStatusCode.NoContent);
-        }
+			try
+			{
+				await db.SaveChangesAsync();
+			}
+			catch (DbUpdateConcurrencyException)
+			{
+				if (!TriviaExists(id))
+				{
+					return NotFound();
+				}
+				else
+				{
+					throw;
+				}
+			}
 
-        // POST: api/Trivia
-        [ResponseType(typeof(Trivia))]
+			return StatusCode(HttpStatusCode.NoContent);
+		}
+
+
+		// POST: api/Trivia
+
+		[ResponseType(typeof(Trivia))]
         public async Task<IHttpActionResult> PostTrivia(Trivia trivia)
         {
             if (!ModelState.IsValid)
