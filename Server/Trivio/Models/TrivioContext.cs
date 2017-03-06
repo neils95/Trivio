@@ -19,8 +19,10 @@ namespace Trivio.Models
         {
         }
 
-		public System.Data.Entity.DbSet<Trivio.Models.Trivia> Trivias { get; set; }
+		public DbSet<Trivia> Trivias { get; set; }
 
-		public System.Data.Entity.DbSet<Trivio.Models.User> Users { get; set; }
+		public DbSet<User> Users { get; set; }
+
+		public DbSet<UserTriviaHistory> UserTriviaHistories { get; set; }
 	}
 }

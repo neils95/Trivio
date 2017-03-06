@@ -15,7 +15,9 @@ namespace Trivio
 			//Camel case
 			var json = GlobalConfiguration.Configuration.Formatters.JsonFormatter;
 			json.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-			
+
+			json.SerializerSettings.PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.None;
+
 			// Web API routes
 			config.MapHttpAttributeRoutes();
 

@@ -19,6 +19,6 @@ namespace Trivio.Models
 		public int Upvotes { get; set; }
 		public int Downvotes { get; set; }
 
-		public virtual ICollection<UserTriviaHistory> UserHistory { get; set; }
+		//public virtual ICollection<UserTriviaHistory> UserHistory { get; set; }
 	}
 }

@@ -78,8 +78,20 @@ namespace Trivio.Controllers
 				return BadRequest("Invalid UserId");
 			}
 
-			//Return
-			return Ok();
+			
+			var userTriviaHistory = db.UserTriviaHistories
+									.Include(b => b.Trivia)
+									.Where(x => x.UserId == id)
+									.Select(m=>new
+										{
+											Trivia = m.Trivia,
+											UserAction=m.UserAction
+										}
+									).ToList();
+			
+			return Ok(new { 
+				TriviaHistory = userTriviaHistory
+			});
 		}
 
 

@@ -23,6 +23,6 @@ namespace Trivio.Models
 		public int TriviaCount { get; set; }
 
 		//Enable trivia history
-		public ICollection<UserTriviaHistory> TriviaHistory { get; set; }
+		//public ICollection<UserTriviaHistory> TriviaHistory { get; set; }
 	}
 }
