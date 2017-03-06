@@ -20,7 +20,7 @@ namespace Trivio.Models
 		public Trivia Trivia { get; set; }
 
 		//-1 DOwnvote, 0 Default, 1 Upvote
-		public int UserAction { get; set; }
+		public int UserVote { get; set; }
 
 	}
 }

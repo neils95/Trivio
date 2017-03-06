@@ -7,10 +7,9 @@ namespace Trivio.Models.DTOs
 {
 	public class UserTriviaHistoryDTO
 	{
-		public int TriviaId { get; set; }
-		public string TriviaText { get; set; }
+		public Trivia Trivia { get; set; }
 
 		//-1 Downvote, 0 Default, 1 Upvote
-		public int UserAction { get; set; }
+		public int UserVote { get; set; }
 	}
 }  

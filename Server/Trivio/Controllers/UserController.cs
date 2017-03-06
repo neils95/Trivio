@@ -85,7 +85,7 @@ namespace Trivio.Controllers
 									.Select(m=>new
 										{
 											Trivia = m.Trivia,
-											UserAction=m.UserAction
+											UserVote=m.UserVote
 										}
 									).ToList();
 			

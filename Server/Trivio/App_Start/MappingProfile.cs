@@ -15,7 +15,9 @@ namespace Trivio.App_Start
 			CreateMap<UserRegistrationDTO, User>();
 			CreateMap<User, UserPublicDTO>();
 			CreateMap<UserTriviaHistory,UserTriviaHistoryDTO>()
-				.ForMember(dest=> dest.TriviaText, opt=>opt.MapFrom(src=>src.Trivia.Text));
+				.ForMember(dest=> dest.Trivia, opt=>opt.MapFrom(src=>src.Trivia));
+
+
 		}
 	}
 }

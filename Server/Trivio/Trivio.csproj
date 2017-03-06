@@ -183,11 +183,16 @@
     <Compile Include="Migrations\201703052330211_AddManyToManyRelationship.Designer.cs">
       <DependentUpon>201703052330211_AddManyToManyRelationship.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201703060121248_RenamedUserActionToUserVote.cs" />
+    <Compile Include="Migrations\201703060121248_RenamedUserActionToUserVote.Designer.cs">
+      <DependentUpon>201703060121248_RenamedUserActionToUserVote.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\DTOs\UserLoginDTO.cs" />
     <Compile Include="Models\DTOs\UserPublicDTO.cs" />
     <Compile Include="Models\DTOs\UserRegistrationDTO.cs" />
     <Compile Include="Models\DTOs\UserTriviaHistoryDTO.cs" />
+    <Compile Include="Models\DTOs\VoteDTO.cs" />
     <Compile Include="Models\Trivia.cs" />
     <Compile Include="Models\TrivioContext.cs" />
     <Compile Include="Models\User.cs" />
@@ -259,6 +264,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201703052330211_AddManyToManyRelationship.resx">
       <DependentUpon>201703052330211_AddManyToManyRelationship.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201703060121248_RenamedUserActionToUserVote.resx">
+      <DependentUpon>201703060121248_RenamedUserActionToUserVote.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
