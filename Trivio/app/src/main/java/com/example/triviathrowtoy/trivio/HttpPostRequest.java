@@ -34,6 +34,7 @@ public class HttpPostRequest extends AsyncTask<String, Void, String> {
                     myUrl.openConnection();
             //Set methods and timeouts
             connection.setDoOutput(true);
+            connection.setDoInput(true);
             connection.setRequestMethod(REQUEST_METHOD);
             connection.setReadTimeout(READ_TIMEOUT);
             connection.setConnectTimeout(CONNECTION_TIMEOUT);
@@ -51,7 +52,7 @@ public class HttpPostRequest extends AsyncTask<String, Void, String> {
             StringBuilder stringBuilder = new StringBuilder();
 
             int HttpResult = connection.getResponseCode();
-            if (HttpResult == HttpURLConnection.HTTP_OK) {
+            if (HttpResult < 400) {
 
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
                         connection.getInputStream(), "utf-8"));
@@ -67,10 +68,23 @@ public class HttpPostRequest extends AsyncTask<String, Void, String> {
                 return stringBuilder.toString();
             } else {
                 Log.e(" ", "" + connection.getResponseMessage());
+
+                //Set our result equal to our stringBuilder
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+                        connection.getErrorStream(), "utf-8"));
+
+                String readLine = null;
+
+                while ((readLine = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(readLine + "\n");
+                }
+
+                bufferedReader.close();
+                Log.e("Post result", "" + stringBuilder.toString());
+
+                result = stringBuilder.toString();
             }
 
-            //Set our result equal to our stringBuilder
-            result = stringBuilder.toString();
         } catch (IOException e) {
             e.printStackTrace();
             result = null;

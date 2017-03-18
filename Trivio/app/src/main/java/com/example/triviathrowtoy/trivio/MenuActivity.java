@@ -32,4 +32,11 @@ public class MenuActivity extends AppCompatActivity {
         Intent intent = new Intent(this, CategoryActivity.class);
         startActivity(intent);
     }
+
+    /** Called when the user clicks the Logout button */
+    public void userLogout(View view) {
+        SaveSharedPreferences.clearPreferences(this);
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
 }

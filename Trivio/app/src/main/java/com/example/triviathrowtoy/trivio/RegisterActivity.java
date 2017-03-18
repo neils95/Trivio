@@ -43,7 +43,7 @@ import static android.Manifest.permission.READ_CONTACTS;
 
 public class RegisterActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
-    private static String PostRequestUrl = "";
+    private static String PostRequestUrl = "http://triviotoy.azurewebsites.net/User/Register";
 
     // UI references.
     private EditText mEmailView;
@@ -77,7 +77,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
         mFirstNameView = (EditText) findViewById(R.id.firstName);
         mLastNameView = (EditText) findViewById(R.id.lastName);
 
-        mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        mEmailSignInButton = (Button) findViewById(R.id.email_register_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -85,8 +85,8 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
             }
         });
 
-        mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
+        mLoginFormView = findViewById(R.id.register_form);
+        mProgressView = findViewById(R.id.register_progress);
     }
 
     /**
@@ -113,21 +113,21 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
         View focusView = null;
 
         // Check for a valid first name, if the user entered one.
-        if (!TextUtils.isEmpty(firstName)) {
+        if (TextUtils.isEmpty(firstName)) {
             mFirstNameView.setError(getString(R.string.error_field_required));
             focusView = mFirstNameView;
             cancel = true;
         }
 
         // Check for a valid last name, if the user entered one.
-        if (!TextUtils.isEmpty(firstName)) {
+        if (TextUtils.isEmpty(lastName)) {
             mLastNameView.setError(getString(R.string.error_field_required));
             focusView = mLastNameView;
             cancel = true;
         }
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (TextUtils.isEmpty(password) || !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
@@ -155,10 +155,10 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
 
             //TODO Implement POST request
             // Check user authentication login
-            //if( userRegisterTask(firstName, lastName, email,password) ) {
+            if( userRegisterTask(firstName, lastName, email,password) ) {
                 Intent intent = new Intent(this, LoginActivity.class);
                 startActivity(intent);
-            //}
+            }
         }
 
         mEmailSignInButton.setEnabled(true);
@@ -301,7 +301,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
 
         HttpPostRequest postRequest = new HttpPostRequest();
         try {
-            result = postRequest.execute(PostRequestUrl).get();
+            result = postRequest.execute(PostRequestUrl, jsonString).get();
 
             Log.d("POST_REQUEST",result);
         }
@@ -312,7 +312,10 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
 
         showProgress(false);
 
-        if(result.equals("")) {
+        if(result == null) {
+            return false;
+        }
+        else if( result.isEmpty() || result.equals("")) {
             return false;
         }
 

@@ -89,6 +89,8 @@ public class Server {
     private class SocketServerReplyThread extends Thread {
 
         private Socket hostThreadSocket;
+        OutputStream outputStream = null;
+        DataInputStream in = null;
 
         SocketServerReplyThread(Socket socket) {
             hostThreadSocket = socket;
@@ -96,16 +98,15 @@ public class Server {
 
         @Override
         public void run() {
-            OutputStream outputStream = null;
 
 
             // send confirmation of socket connection
-            String confirmation = "ok";
+            String confirmation = "okay";
             try {
                 outputStream = hostThreadSocket.getOutputStream();
                 PrintStream printStream = new PrintStream(outputStream);
                 printStream.print(confirmation);
-                //printStream.close();
+                printStream.flush();
                 Log.d("SOCKET_STREAM", "confirmation sent");
 
                 // Get confirmation connection from toy
@@ -113,7 +114,7 @@ public class Server {
 
                 Log.d("SOCKET_SERVER", "received message: " + message);
 
-                if(message.equals("ok")) {
+                if(message.equals("hello")) {
                     Log.d("SOCKET_SERVER", "connection confirmed");
                     activity.runOnUiThread(new Runnable() {
 
@@ -129,14 +130,15 @@ public class Server {
                             // Send credentials
                             Log.d("SOCKET_STREAM", "sending credentials.");
                             String msgReply = SSID + ":" + password;
-                            outputStream = hostThreadSocket.getOutputStream();
-                            printStream = new PrintStream(outputStream);
+                            //outputStream = hostThreadSocket.getOutputStream();
+                            //printStream = new PrintStream(outputStream);
                             printStream.print(msgReply);
+                            printStream.flush();
 
                             message = getInputStream(hostThreadSocket);
                             Log.d("WIFI_CONNECTION_RESULT", message);
 
-                            if(message.equals("Success")) {
+                            if(message.equals("connected")) {
                                 activity.runOnUiThread(new Runnable() {
 
                                     @Override
@@ -159,51 +161,54 @@ public class Server {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+//                if(in != null) {
+//                    try {
+//                        in.close();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
             }
         }
 
         private String getInputStream(Socket socket) {
             String input = "";
-            boolean end = false;
-            DataInputStream in = null;
+            //DataInputStream in = null;
             try {
-                in = new DataInputStream(socket.getInputStream());
+                if(in == null) {
+                    in = new DataInputStream(socket.getInputStream());
+                }
                 int bytesRead = 0;
                 byte[] messageByte = new byte[1000];
 
-                messageByte[0] = in.readByte();
-                messageByte[1] = in.readByte();
-                ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
-
-                int bytesToRead = byteBuffer.getShort();
-                System.out.println("About to read " + bytesToRead + " octets");
-
-                // Read from socket
-//                in.readFully(messageByte, 0, bytesToRead);
-
-                while(!end)
-                {
-                    bytesRead = in.read(messageByte);
-                    System.out.println("BytesRead: " + bytesRead);
-                    input += new String(messageByte, 0, bytesRead);
-                    if (input.length() == bytesToRead )
-                    {
-                        end = true;
-                    }
+                int i = 0;
+                while(in.available() > 0) {
+                    messageByte[i] = in.readByte();
+                    char c = (char) messageByte[i];
+                    System.out.println("Byte read: " + c);
+                    input += String.valueOf(c);
+                    i++;
+                    //messageByte[1] = in.readByte();
                 }
+//                ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
+//
+//                int bytesToRead = byteBuffer.getShort();
+//                System.out.println("About to read " + bytesToRead + " octets");
+//
+//                i = 0;
+//                while(input.length() != bytesToRead) {
+//                    if(messageByte[i] == 0) {
+//                        break;
+//                    }
+//                    char c = (char) messageByte[i];
+//                    System.out.println("Byte Buffer: " + c);
+//                    input += String.valueOf(c);
+//                    i++;
+//                }
 
-                input = new String(messageByte, 0, bytesToRead);
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally {
-                if(in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
             }
 
             return input;

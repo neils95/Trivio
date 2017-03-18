@@ -94,12 +94,13 @@ public class ManageWifiActivity extends AppCompatActivity {
     public void setCredentialActivity() {
         manageWifiActivity.setVisibility(View.GONE);
         credentialActivity.setVisibility(View.VISIBLE);
+        mProgressView = findViewById(R.id.connect_toy_progress);
     }
 
     /** Called when the user clicks the connect button */
     public void sendConnection(View view) {
         showProgress(true);
-        server.sendCredentials(selectedWifi.SSID,"pw");
+        server.sendCredentials(selectedWifi.SSID,"pen15LMN");
     }
 
     private void checkPhoneConnection() {
@@ -153,12 +154,6 @@ public class ManageWifiActivity extends AppCompatActivity {
     /** Called when the user clicks the connectWifi button */
     public void selectWifiNetwork(View view) {
         if (selectedWifi != null) {
-//            // start intent for wifi connection
-//            Intent intent = new Intent(this, WifiConnectActivity.class);
-//            intent.putExtra(WIFI_PARCEL, selectedWifi);
-//            intent.putExtra(CheckPhoneConnectionActivity.ADDRESS_PARCEL, address);
-//            intent.putExtra(CheckPhoneConnectionActivity.PORT_PARCEL, port);
-//            startActivity(intent);
             setCredentialActivity();
         }
     }

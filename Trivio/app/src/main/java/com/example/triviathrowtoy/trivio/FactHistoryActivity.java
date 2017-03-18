@@ -29,8 +29,9 @@ public class FactHistoryActivity extends AppCompatActivity {
 
     private ListView factHistoryList;
     private ArrayList<FactItem> factHistory = new ArrayList<FactItem>();
-    private String getRequestUrl = "http://api-env.ptt9xgaruh.us-west-2.elasticbeanstalk.com/";
-    private String getRequestId = "1";
+    //private String getRequestUrl = "http://api-env.ptt9xgaruh.us-west-2.elasticbeanstalk.com/";
+    private String getRequestUrl = "http://triviotoy.azurewebsites.net/User/";
+    private String getRequestId;
     private String FACT_PARCEL = "PARCELABLE_FACT";
     private View mProgressView;
 
@@ -40,6 +41,7 @@ public class FactHistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_fact_history);
 
         factHistoryList = (ListView)findViewById(R.id.historyListView);
+        getRequestId = SaveSharedPreferences.getUserID(this) + "/history";
 
         mProgressView = findViewById(R.id.fact_progress);
         showProgress(true);
@@ -79,7 +81,7 @@ public class FactHistoryActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        if(!result.isEmpty()) {
+        if(result != null && !result.isEmpty()) {
             Log.d("GET_REQUEST",result);
             factHistory.add(new FactItem(result, (long)1));
         }

@@ -39,4 +39,11 @@ public class SaveSharedPreferences {
     {
         return getSharedPreferences(ctx).getString(PREF_USER_ID, "");
     }
+
+    public static void clearPreferences(Context ctx)
+    {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        editor.clear();
+        editor.commit();
+    }
 }

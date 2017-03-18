@@ -6,6 +6,7 @@
     <string name="manage_wifi">Manage Wifi</string>
     <string name="pick_category">Pick a Category</string>
     <string name="view_history">View Fact History</string>
+    <string name="logout">Logout</string>
 
     <!-- Strings related to Wifi menu -->
     <string name="view_saved_wifi">View saved networks</string>

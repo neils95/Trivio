@@ -446,7 +446,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         HttpPostRequest postRequest = new HttpPostRequest();
         try {
-            result = postRequest.execute(PostRequestUrl).get();
+            result = postRequest.execute(PostRequestUrl, jsonString).get();
 
             Log.d("POST_REQUEST",result);
         }
