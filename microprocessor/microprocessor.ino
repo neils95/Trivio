@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
+#include <SD.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include "factgenerator.h"
 #include <Wire.h>
 #include <EEPROM.h>
 #include "EMIC2.h"
@@ -11,8 +11,13 @@
 #define txpin 5
 int16_t startingAddress = 4;
 
-// uncomment if need to generate facts for testing purposes
-//#define GENERATEFACTS
+const String playFilename = "factNumber.txt"; // file that stores filename of next fact to be played
+String factFilename = "0";  // filename of next fact to be played
+const int MAXFILENUM = 2000;  // maximum number of files for facts
+const String writeFilename = "writeNumber.txt"; // file that stores filename of next fact to be stored
+int writeFileNumber = 0;  // filename of next fact to be stored
+const String serverCountFile = "serverCountFile.txt"; // file that stores how many facts have been played since last server update
+const String txt = ".txt"; 
 
 EMIC2 emic;
 MPU6050 accelgyro;
@@ -22,10 +27,6 @@ int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
 int32_t threshold = 10000;      // threshold for difference in acceleration
 
-int16_t address = 0;              // address of next available space for fact storage
-const int maxFactSize = 140;      // maximum size of fact
-int factIndex = startingAddress;  // address of fact to play
-
 void setup() {
   Serial.begin(9600);
   Wire.begin();
@@ -33,8 +34,8 @@ void setup() {
   // initialize emic devices
   Serial.println("Intializing emic device...");
   emic.begin(rxpin, txpin);
-  emic.setVoice(8); //sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(10); //sets the vloume, 10 is max 
+  emic.setVoice(8); // sets the voice, there are 9 types, 0 - 8
+  emic.setVolume(10); // sets the vloume, 10 is max 
   
   // initialize device
   Serial.println("Initializing I2C devices...");
@@ -47,10 +48,8 @@ void setup() {
   Serial.println(EEPROM.length());
   //resetEEPROM(); // clears fact storage
 
-  // read last address index stored
-  readAddress();
-  // read next address after last fact played
-  readFactIndex();
+  // get filename of last stored fact
+  getFactStorageIndex();
 }
 
 // clears EEPROM and resets starting address
@@ -63,39 +62,6 @@ void resetEEPROM() {
   writeAddress();
   writeFactIndex();
   Serial.println("EEPROM reset");
-}
-
-// breaks up 16 bit address to store into EEPROM (little endian)
-void writeAddress() {
-  int lower_8bits = address & 0xff;
-  int upper_8bits = (address >> 8) & 0xff;
-  EEPROM.write(0, lower_8bits);
-  EEPROM.write(1, upper_8bits);
-  printDebugging(2);
-}
-
-// reads 16 bit address from EEPROM (little endian)
-void readAddress() {
-  int lower_8bits = EEPROM.read(0);
-  int upper_8bits = EEPROM.read(1);
-  address = (upper_8bits << 8) | lower_8bits;
-  printDebugging(3);
-}
-
-// reads last factIndex from EEPROM (little endian)
-void writeFactIndex() {
-  int lower_8bits = factIndex & 0xff;
-  int upper_8bits = (factIndex >> 8) & 0xff;
-  EEPROM.write(2, lower_8bits);
-  EEPROM.write(3, upper_8bits);
-}
-
-// writes last factIndex address to EEPROM (little endian)
-void readFactIndex() {
-  int lower_8bits = EEPROM.read(2);
-  int upper_8bits = EEPROM.read(3);
-  factIndex = (upper_8bits << 8) | lower_8bits;
-  Serial.println(factIndex);
 }
 
 void testConnection() {
@@ -113,30 +79,151 @@ void testConnection() {
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
 }
 
-// Caches fact when received from server
-void cacheFactLocally(char* fact, int factLength) {
-  if (address <= startingAddress) address = startingAddress - 1; // fact storage address starts at 4
-
-  if ( (address + factLength) > EEPROM.length()) { // EEPROM memory does not have enough room to store fact
-    Serial.println("Memory full. Can't cache fact");
-    return;
-  }
-  else {
-    if (strlen(fact) < maxFactSize) { // fact does not exceed max fact size
-      // store fact byte by byte in EEPROM
-      for (int i = 0; i <= factLength; i++) {
-        address++;
-        EEPROM.write(address, fact[i]);
-        Serial.print(fact[i]);
-        if (fact[i] == '\0') break; // end of fact string
-      }
-      Serial.println();
-      // update address for next stored fact
-      writeAddress();
-    } 
-    else {
-      Serial.println("Fact exceeds maximum string size");
+void updateServerPlayCount() {
+  if(SD.exists(serverCountFile) {
+    // read/write from file
+    File file = SD.open(serverCountFile);
+    while(file.available()) {
+      factFilename = file.read();
     }
+  } else {
+    // create file
+    File file = SD.open(serverCountFile,"FILE_WRITE");
+    file.write("0");
+    file.close();
+  }
+}
+
+// resets count played back to 0 since last server update
+void resetServerPlayCount() {
+  if(SD.exists(serverCountFile) {
+    // read/write from file
+    File file = SD.open(serverCountFile);
+    while(file.available()) {
+      factFilename = file.read();
+    }
+  } else {
+    // create file
+    File file = SD.open(serverCountFile,"FILE_WRITE");
+    file.write("0");
+    file.close();
+  }
+}
+
+// gets name of file for fact to be played and stores in global variable
+void getPlayFilename() {
+  if(SD.exists(playFilename) {
+    // read/write from file
+    File file = SD.open(playFilename);
+    while(file.available()) {
+      factFilename = file.read();
+    }
+  } else {
+    // create file
+    File file = SD.open(playFilename,"FILE_WRITE");
+    file.write("0");
+    file.close();
+  }
+}
+
+// writes to file what fact to play next time
+void updatePlayFileName() {
+  // increment and store fact index to be played next time
+  int number = factFilename.toInt();
+  number++;
+  factFilename = String(number);
+  
+  if(SD.exists(playFilename) {
+    // read/write from file
+    File file = SD.open(playFilename);
+    file.write(factFilename);
+  } else {
+    // create file
+    File file = SD.open(playFilename,"FILE_WRITE");
+    file.write("0");
+    file.close();
+  }
+}
+
+// gets fact string to play
+void String getFactFromFile() {
+  // get name of file to play
+  getPlayFilename();
+
+  // get fact from file
+  String factString = "";
+  if(SD.exists(factFilename + txt) {
+    // read from file
+    File file = SD.open(factFilename + txt);
+    factString =  file.read();
+  }
+  // increment and store fact index to be played next time
+  updatePlayFileName();
+  return factString;
+}
+
+/**
+ * Call this function when storing fact from server
+ */
+// stores fact
+void storeFact(String factString) {
+  File file;
+  String filename = String(writeFileNumber) + txt;
+  // create/open file and store fact
+  if(SD.exists(filename)) {
+    file = SD.open(filename);
+    file.write(factString);
+    file.close();
+  } else {
+    File file = SD.open(filename,"FILE_WRITE");
+    file.write(factString);
+    file.close();
+  }
+
+  // increment name of file to store next fact as
+  writeFileNumber++;
+}
+
+// gets index of last stored fact
+void getFactStorageIndex() {
+  File file;
+  String number = "0";
+  // get filename to store fact as
+  if(SD.exists(writeFilename) {
+    // read/write from file
+    file = SD.open(writeFilename);
+    while(file.available()) {
+      number = file.read();
+    }
+    file.close();
+  } else {
+    // create file
+    File file = SD.open(writeFilename,"FILE_WRITE");
+    file.write("0");
+    file.close();
+  }
+
+  // sets it as global variable
+  writeFileNumber = number.toInt();
+}
+
+// updates saving index of last stored fact
+void updateFactStorageIndex() {
+  File file;
+  if(SD.exists(writeFilename) {
+    // update fact index of last stored
+    file = SD.open(writeFilename);
+    // if max reached, go back to 0
+    if(writeFactNumber > MAXFILENUM) {
+      writeFactNumber = 0;
+    }
+    file.write(String(writeFactNumber));
+    file.close();
+  } else {
+    // create file
+    File file = SD.open(writeFilename,"FILE_WRITE");
+    file.write("0");
+    file.close();
   }
 }
 
@@ -146,27 +233,13 @@ void playFact(String fact) {
   emic.speak(fact);
 }
 
+/**
+ * Call this function when throw is detected
+ */
 // get fact when shake or throw is detected
 void getFact() {
-  if(factIndex == startingAddress && address == startingAddress) {
-    Serial.println("No facts in cache");
-    return;
-  }
-  // reset factIndex if all facts have been played
-  if (factIndex < startingAddress) factIndex = startingAddress;
-  if (factIndex >= address) factIndex = startingAddress;
-
   String fact;
-  printDebugging(4);
-  // read fact from EEPROM
-  while (EEPROM.read(factIndex) != '\0') {
-    fact += (char)EEPROM.read(factIndex);
-    factIndex++;
-  }
-
-  // update fact address for next fact to be played
-  factIndex++;
-  writeFactIndex();
+  fact = getFactFromFile();
   playFact(fact);
 }
 
@@ -202,64 +275,7 @@ void sampleAcceleration(int samples) {
 void loop() {
   checkAcceleration();
   //if (ax == 0 && ay == 0 && az == 0) testConnection();
-  
-  #ifdef GENERATEFACTS
-    generateFacts();
-    delay(3000);
-  #endif
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * Testing and Debugging functions
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- */
- 
-// generate facts for testing purposes
-#ifdef GENERATEFACTS
-  FACTGENERATOR factGenerator;
-  int factNum = factGenerator.getNumFacts();
-  char fact[140];
-  
-  void generateFacts() {
-    // generate facts for testing purposes
-    for( int i = 0; i < factNum; i++) {
-      factGenerator.getFact(i, fact);
-      cacheFactLocally(fact, strlen(fact));
-      delay(5000);
-    }
-  }
-#endif
 
 // Function serial prints for debuging purposes
 void printDebugging(int function) {
