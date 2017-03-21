@@ -79,13 +79,39 @@ void testConnection() {
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
 }
 
-void updateServerPlayCount() {
+/**
+ * Call this function to get number to return to server for how many facts has been played
+ */
+// get number of facts played since last server pull
+void int getServerPlayCount() {
+  String numString = "";
+  int number = 0;
   if(SD.exists(serverCountFile) {
-    // read/write from file
     File file = SD.open(serverCountFile);
     while(file.available()) {
-      factFilename = file.read();
+      numString= file.read();
     }
+    number = numString.toInt();
+    file.close();
+  } else {
+    // create file
+    File file = SD.open(serverCountFile,"FILE_WRITE");
+    file.write("0");
+    file.close();
+  }
+  return number;
+}
+
+// updates count of how many facts have been played since last server pull
+void updateServerPlayCount() {
+  int number = getServerPlayCount();
+  number++;
+  String numString = "";
+  if(SD.exists(serverCountFile) {
+    // write file
+    File file = SD.open(serverCountFile);
+    file.write(String(number));
+    file.close();
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
@@ -99,9 +125,7 @@ void resetServerPlayCount() {
   if(SD.exists(serverCountFile) {
     // read/write from file
     File file = SD.open(serverCountFile);
-    while(file.available()) {
-      factFilename = file.read();
-    }
+    file.write("0");
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
@@ -230,6 +254,7 @@ void updateFactStorageIndex() {
 // plays fact on TTS module
 void playFact(String fact) {
   Serial.println(fact);
+  updateServerPlayCount();
   emic.speak(fact);
 }
 
