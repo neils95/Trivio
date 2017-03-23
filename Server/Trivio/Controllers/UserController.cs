@@ -8,6 +8,7 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Description;
@@ -32,22 +33,32 @@ namespace Trivio.Controllers
 			}
 
 			//Add user to Db.
-			var user = Mapper.Map<User>(newUser);
 			try 
 			{
-				db.Users.Add(user);
-				await db.SaveChangesAsync();
+				Regex rx = new Regex(@"^[-!#$%&'*+/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+/0-9=?A-Z^_a-z{|}~])*@[a-zA-Z](-?[a-zA-Z0-9])*(\.[a-zA-Z](-?[a-zA-Z0-9])*)+$");
+				if(rx.IsMatch(newUser.Email)) //valid email
+				 {
+					var user = Mapper.Map<User>(newUser);
+					db.Users.Add(user);
+					await db.SaveChangesAsync();
+
+					//Check Header for path to new resource
+					return CreatedAtRoute(
+						"RegisterUser",
+						new { id = user.Id },
+						Mapper.Map<UserPublicDTO>(user)
+					);
+
+				}
+				else 
+				{
+					throw new Exception("Invalid Email Id format");
+				}
+
 			}
 			catch {
-				return BadRequest(String.Format("Account with email {0} already exists",newUser.Email));
+				return BadRequest(String.Format("Account with email {0} already exists or invalid email",newUser.Email));
 			}
-
-			//Check Header for path to new resource
-			return CreatedAtRoute(
-				"RegisterUser", 
-				new { id = user.Id},
-				Mapper.Map<UserPublicDTO>(user)
-			);
 		}
 
 		//POST: User/Login
