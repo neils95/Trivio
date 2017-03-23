@@ -89,7 +89,7 @@ void int getServerPlayCount() {
   if(SD.exists(serverCountFile) {
     File file = SD.open(serverCountFile);
     while(file.available()) {
-      numString= file.read();
+      numString += file.read();
     }
     number = numString.toInt();
     file.close();
@@ -139,8 +139,9 @@ void getPlayFilename() {
   if(SD.exists(playFilename) {
     // read/write from file
     File file = SD.open(playFilename);
+    factFilename = "";
     while(file.available()) {
-      factFilename = file.read();
+      factFilename += file.read();
     }
   } else {
     // create file
@@ -179,7 +180,9 @@ void String getFactFromFile() {
   if(SD.exists(factFilename + txt) {
     // read from file
     File file = SD.open(factFilename + txt);
-    factString =  file.read();
+    while(file.available()) {
+      factString +=  file.read();
+    }
   }
   // increment and store fact index to be played next time
   updatePlayFileName();
@@ -214,10 +217,11 @@ void getFactStorageIndex() {
   String number = "0";
   // get filename to store fact as
   if(SD.exists(writeFilename) {
+    number = "";
     // read/write from file
     file = SD.open(writeFilename);
     while(file.available()) {
-      number = file.read();
+      number += file.read();
     }
     file.close();
   } else {
