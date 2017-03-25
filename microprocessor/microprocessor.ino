@@ -77,18 +77,6 @@ void setup() {
   getFactStorageIndex();
 }
 
-// clears EEPROM and resets starting address
-/*void resetEEPROM() {
-  for (int i = 0 ; i < EEPROM.length() ; i++) {
-    EEPROM.write(i, 0);
-  }
-  address = startingAddress;
-  factIndex = startingAddress;
-  writeAddress();
-  writeFactIndex();
-  Serial.println("EEPROM reset");
-}*/
-
 void testConnection() {
   Serial.println("Testing device connections...");
   bool accelConnection = accelgyro.testConnection();
@@ -118,13 +106,38 @@ void connectToNetwork()
   }
 }
 
-void updateServerPlayCount() {
+ * Call this function to get number to return to server for how many facts has been played
+ */
+// get number of facts played since last server pull
+int getServerPlayCount() {
+  String numString = "";
+  int number = 0;
   if(SD.exists(serverCountFile)) {
-    // read/write from file
     File file = SD.open(serverCountFile);
     while(file.available()) {
-      factFilename = file.read();
+      numString += file.read();
     }
+    number = numString.toInt();
+    file.close();
+  } else {
+    // create file
+    File file = SD.open(serverCountFile,"FILE_WRITE");
+    file.println("0");
+    file.close();
+  }
+  return number;
+}
+
+// updates count of how many facts have been played since last server pull
+void updateServerPlayCount() {
+  int number = getServerPlayCount();
+  number++;
+  String numString = "";
+  if(SD.exists(serverCountFile)) {
+    // write file
+    File file = SD.open(serverCountFile);
+    file.println(String(number));
+    file.close();
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
@@ -138,9 +151,7 @@ void resetServerPlayCount() {
   if(SD.exists(serverCountFile)) {
     // read/write from file
     File file = SD.open(serverCountFile);
-    while(file.available()) {
-      factFilename = file.read();
-    }
+    file.println("0");
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
@@ -154,8 +165,9 @@ void getPlayFilename() {
   if(SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
+    factFilename = "";
     while(file.available()) {
-      factFilename = file.read();
+      factFilename += file.read();
     }
   } else {
     // create file
@@ -194,7 +206,9 @@ String getFactFromFile() {
   if(SD.exists(factFilename + txt)) {
     // read from file
     File file = SD.open(factFilename + txt);
-    factString =  file.read();
+    while(file.available()) {
+      factString +=  file.read();
+    }
   }
   // increment and store fact index to be played next time
   updatePlayFileName();
@@ -229,10 +243,11 @@ void getFactStorageIndex() {
   String number = "0";
   // get filename to store fact as
   if(SD.exists(writeFilename)) {
+    number = "";
     // read/write from file
     file = SD.open(writeFilename);
     while(file.available()) {
-      number = file.read();
+      number += file.read();
     }
     file.close();
   } else {
@@ -269,6 +284,7 @@ void updateFactStorageIndex() {
 // plays fact on TTS module
 void playFact(String fact) {
   Serial.println(fact);
+  updateServerPlayCount();
   emic.speak(fact);
 }
 
