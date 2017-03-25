@@ -52,18 +52,6 @@ void setup() {
   getFactStorageIndex();
 }
 
-// clears EEPROM and resets starting address
-void resetEEPROM() {
-  for (int i = 0 ; i < EEPROM.length() ; i++) {
-    EEPROM.write(i, 0);
-  }
-  address = startingAddress;
-  factIndex = startingAddress;
-  writeAddress();
-  writeFactIndex();
-  Serial.println("EEPROM reset");
-}
-
 void testConnection() {
   Serial.println("Testing device connections...");
   bool accelConnection = accelgyro.testConnection();
@@ -83,10 +71,10 @@ void testConnection() {
  * Call this function to get number to return to server for how many facts has been played
  */
 // get number of facts played since last server pull
-void int getServerPlayCount() {
+int getServerPlayCount() {
   String numString = "";
   int number = 0;
-  if(SD.exists(serverCountFile) {
+  if(SD.exists(serverCountFile)) {
     File file = SD.open(serverCountFile);
     while(file.available()) {
       numString += file.read();
@@ -96,7 +84,7 @@ void int getServerPlayCount() {
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
   return number;
@@ -107,36 +95,36 @@ void updateServerPlayCount() {
   int number = getServerPlayCount();
   number++;
   String numString = "";
-  if(SD.exists(serverCountFile) {
+  if(SD.exists(serverCountFile)) {
     // write file
     File file = SD.open(serverCountFile);
-    file.write(String(number));
+    file.println(String(number));
     file.close();
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
 }
 
 // resets count played back to 0 since last server update
 void resetServerPlayCount() {
-  if(SD.exists(serverCountFile) {
+  if(SD.exists(serverCountFile)) {
     // read/write from file
     File file = SD.open(serverCountFile);
-    file.write("0");
+    file.println("0");
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
 }
 
 // gets name of file for fact to be played and stores in global variable
 void getPlayFilename() {
-  if(SD.exists(playFilename) {
+  if(SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
     factFilename = "";
@@ -146,7 +134,7 @@ void getPlayFilename() {
   } else {
     // create file
     File file = SD.open(playFilename,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
 }
@@ -158,26 +146,26 @@ void updatePlayFileName() {
   number++;
   factFilename = String(number);
   
-  if(SD.exists(playFilename) {
+  if(SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
-    file.write(factFilename);
+    file.println(factFilename);
   } else {
     // create file
     File file = SD.open(playFilename,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
 }
 
 // gets fact string to play
-void String getFactFromFile() {
+String getFactFromFile() {
   // get name of file to play
   getPlayFilename();
 
   // get fact from file
   String factString = "";
-  if(SD.exists(factFilename + txt) {
+  if(SD.exists(factFilename + txt)) {
     // read from file
     File file = SD.open(factFilename + txt);
     while(file.available()) {
@@ -199,11 +187,11 @@ void storeFact(String factString) {
   // create/open file and store fact
   if(SD.exists(filename)) {
     file = SD.open(filename);
-    file.write(factString);
+    file.println(factString);
     file.close();
   } else {
     File file = SD.open(filename,"FILE_WRITE");
-    file.write(factString);
+    file.println(factString);
     file.close();
   }
 
@@ -216,7 +204,7 @@ void getFactStorageIndex() {
   File file;
   String number = "0";
   // get filename to store fact as
-  if(SD.exists(writeFilename) {
+  if(SD.exists(writeFilename)) {
     number = "";
     // read/write from file
     file = SD.open(writeFilename);
@@ -227,7 +215,7 @@ void getFactStorageIndex() {
   } else {
     // create file
     File file = SD.open(writeFilename,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
 
@@ -238,19 +226,19 @@ void getFactStorageIndex() {
 // updates saving index of last stored fact
 void updateFactStorageIndex() {
   File file;
-  if(SD.exists(writeFilename) {
+  if(SD.exists(writeFilename)) {
     // update fact index of last stored
     file = SD.open(writeFilename);
     // if max reached, go back to 0
-    if(writeFactNumber > MAXFILENUM) {
-      writeFactNumber = 0;
+    if(writeFileNumber > MAXFILENUM) {
+      writeFileNumber = 0;
     }
-    file.write(String(writeFactNumber));
+    file.println(String(writeFileNumber));
     file.close();
   } else {
     // create file
     File file = SD.open(writeFilename,"FILE_WRITE");
-    file.write("0");
+    file.println("0");
     file.close();
   }
 }
@@ -330,18 +318,6 @@ void printDebugging(int function) {
       Serial.println(y_diff);
       Serial.print("z diff: ");
       Serial.println(z_diff);
-      break;
-    case 2: // print writing 16 bit address to EEPROM
-      readAddress();
-      break;
-    case 3: // print reading 16 bit address from EEPROM
-      Serial.print("Last saved address: ");
-      Serial.println(address);
-      break;
-    case 4: // print address of fact playing
-      Serial.print("Fact at address ");
-      Serial.print(factIndex);
-      Serial.print(": ");
       break;
   }
   Serial.println();
