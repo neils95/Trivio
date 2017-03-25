@@ -54,14 +54,14 @@ void setup() {
   
   // verify connection
   testConnection();
-
-  // initialize serial for ESP module
-  Serial1.begin(9600);
-  // initialize ESP module
-  WiFi.init(&Serial1);
-
-  // attempt to connect to WiFi network
-  connectToNetwork();
+//
+//  // initialize serial for ESP module
+//  Serial1.begin(9600);
+//  // initialize ESP module
+//  WiFi.init(&Serial1);
+//
+//  // attempt to connect to WiFi network
+//  connectToNetwork();
 
   setupSD();
   // get filename of last stored fact
@@ -126,7 +126,8 @@ int getServerPlayCount() {
   if(SD.exists(serverCountFile)) {
     File file = SD.open(serverCountFile);
     while(file.available()) {
-      numString += file.read();
+      char numChar = file.read();
+      numString += numChar;
     }
     number = numString.toInt();
     file.close();
@@ -165,6 +166,7 @@ void resetServerPlayCount() {
     // read/write from file
     File file = SD.open(serverCountFile);
     file.println("0");
+    file.close();
   } else {
     // create file
     File file = SD.open(serverCountFile,"FILE_WRITE");
@@ -176,23 +178,32 @@ void resetServerPlayCount() {
 // gets name of file for fact to be played and stores in global variable
 String getPlayFilename() {
   Serial.println(F("Getting name of file to be played..."));
-  String factFilename = "";
+  String factFilename = "0";
   char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
-    factFilename = "";
-    while(file.available()) {
-      factFilename += file.read();
+    if(file) {
+      factFilename = "";
+      while(file.available()) {
+        char ltr = file.read();
+        factFilename += ltr;
+      }
+      file.close();
+    } else {
+      Serial.println(F("Error reading from file."));
     }
   } else {
     // create file
-    Serial.println(F("No file exists. Creating file..."));
     File file = SD.open(playFilename,"FILE_WRITE");
-    file.println("0");
-    file.close();
+    if(file) {
+      file.println("0");
+      file.close();
+      Serial.println(F("No file exists. File created."));
+    }
   }
-
+  Serial.print(F("Name of file: "));
+  Serial.println(factFilename);
   return factFilename;
 }
 
@@ -208,6 +219,7 @@ void updatePlayFileName(String factFilename) {
     // read/write from file
     File file = SD.open(playFilename);
     file.println(factFilename);
+    file.close();
   } else {
     // create file
     File file = SD.open(playFilename,"FILE_WRITE");
@@ -220,16 +232,21 @@ void updatePlayFileName(String factFilename) {
 String getFactFromFile() {
   Serial.println(F("Getting Fact from file..."));
   // get name of file to play
-  String factFilename = getPlayFilename();
+  String factFilename = getPlayFilename() + ".txt";
+
+  Serial.println(F("Opening file: "));
+    Serial.println(factFilename);
 
   // get fact from file
   String factString = "";
-  if(SD.exists(factFilename + ".txt")) {
+  if(SD.exists(factFilename)) {
     // read from file
-    File file = SD.open(factFilename + ".txt");
+    File file = SD.open(factFilename);
     while(file.available()) {
-      factString +=  file.read();
+      char ltr =  file.read();
+      factString += ltr;
     }
+    file.close();
   }
   else {
     factString = "No Fact available.";
@@ -273,7 +290,8 @@ void getFactStorageIndex() {
     // read/write from file
     file = SD.open(writeFilename);
     while(file.available()) {
-      number += file.read();
+      char num = file.read();
+      number += num;
     }
     file.close();
   } else {
@@ -289,17 +307,21 @@ void getFactStorageIndex() {
 
 // updates saving index of last stored fact
 void updateFactStorageIndex() {
+  Serial.println(F("Updating Fact Storage Index: "));
   char writeFilename = "w.txt";
   File file;
   if(SD.exists(writeFilename)) {
     // update fact index of last stored
     file = SD.open(writeFilename);
-    // if max reached, go back to 0
-    if(writeFileNumber > MAXFILENUM) {
-      writeFileNumber = 0;
+    if(file) {
+      // if max reached, go back to 0
+      if(writeFileNumber > MAXFILENUM) {
+        writeFileNumber = 0;
+      }
+      file.println(String(writeFileNumber));
+      file.close();
+      Serial.println(writeFileNumber);
     }
-    file.println(String(writeFileNumber));
-    file.close();
   } else {
     // create file
     File file = SD.open(writeFilename,"FILE_WRITE");
@@ -310,6 +332,7 @@ void updateFactStorageIndex() {
 
 // plays fact on TTS module
 void playFact(String fact) {
+  Serial.println(F("Fact: "));
   Serial.println(fact);
   updateServerPlayCount();
   emic.speak(fact);
@@ -420,10 +443,10 @@ bool factRequestSuccessful()
 
 void loop() {
   //if there's incoming data over server connection, read in the fact
-  readInFact();
+  //readInFact();
 
   //if fact has been read in -> cache fact and reset string for next retrieval
-  resetFact();
+  //resetFact();
   
   checkAcceleration();
 }
