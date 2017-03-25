@@ -5,12 +5,24 @@
 #include <Wire.h>
 #include <EEPROM.h>
 #include "EMIC2.h"
+#include "WiFiEsp.h"
 //need to add the emic 2 library
 
 #define rxpin 4
 #define txpin 5
 int16_t startingAddress = 4;
 
+// Emulate Serial1 on pins 6/7 if not present
+#ifndef HAVE_HWSERIAL1
+#include "SoftwareSerial.h"
+SoftwareSerial Serial1(6, 7); // RX, TX
+#endif
+
+char ssid[] = "DanseyPhone";            // your network SSID (name)
+char pass[] = "12345679";        // your network password
+int userID = 3;                 // which user is using ball
+int status = WL_IDLE_STATUS;     // the Wifi radio's status
+char server[] = "triviotoy.azurewebsites.net";
 const String playFilename = "factNumber.txt"; // file that stores filename of next fact to be played
 String factFilename = "0";  // filename of next fact to be played
 const int MAXFILENUM = 2000;  // maximum number of files for facts
@@ -18,7 +30,10 @@ const String writeFilename = "writeNumber.txt"; // file that stores filename of 
 int writeFileNumber = 0;  // filename of next fact to be stored
 const String serverCountFile = "serverCountFile.txt"; // file that stores how many facts have been played since last server update
 const String txt = ".txt"; 
+boolean isFact = false;
+String fact = "";
 
+WiFiEspClient client;
 EMIC2 emic;
 MPU6050 accelgyro;
 int16_t ax, ay, az;             // current acceleration values
@@ -30,6 +45,7 @@ int32_t threshold = 10000;      // threshold for difference in acceleration
 void setup() {
   Serial.begin(9600);
   Wire.begin();
+  
 
   // initialize emic devices
   Serial.println("Intializing emic device...");
@@ -41,6 +57,15 @@ void setup() {
   Serial.println("Initializing I2C devices...");
   accelgyro.initialize();
 
+  // initialize serial for ESP module
+  Serial1.begin(9600);
+  // initialize ESP module
+  WiFi.init(&Serial1);
+
+
+  // attempt to connect to WiFi network
+  connectToNetwork();
+  
   // verify connection
   testConnection();
 
@@ -68,6 +93,19 @@ void testConnection() {
 }
 
 /**
+ * Attempts to connect to WiFi if not already connnected
+ * status global variable holds WiFi status 
+ */
+void connectToNetwork()
+{
+  if ( status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to WPA SSID: ");
+    Serial.println(ssid);
+    // Connect to WPA/WPA2 network
+    status = WiFi.begin(ssid, pass);
+  }
+}
+
  * Call this function to get number to return to server for how many facts has been played
  */
 // get number of facts played since last server pull
@@ -260,6 +298,36 @@ void getFact() {
   playFact(fact);
 }
 
+/**
+ * Detects if server is sending over bits of fact string data
+ * and reads into a String
+ */
+void readInFact(){
+  while (client.available()) {
+    char c = client.read();
+    //begin counting characters in string on " character
+    if(c == 34){
+      isFact = true;
+    }
+    //write character in to fact string
+    if(isFact == true && c != 34){
+      fact += c;
+    }
+  }
+}
+
+/**
+ * Resets fact string for next retrieval and calls storeFact function
+ */
+void resetFact(){
+  if(fact.length() > 20){
+    storeFact(fact);
+    Serial.println(fact);
+    isFact = false;
+    fact = "";
+  }
+}
+
 // Checks difference in acceleration for throw
 void checkAcceleration() {
   accelgyro.getAcceleration(&ax, &ay, &az);
@@ -273,6 +341,12 @@ void checkAcceleration() {
     Serial.println("Throw or shake detected");
     Serial.println("Stating fact...");
     getFact(); // Read fact from EEPROM and plays it
+    if(factRequestSuccessful()){ //make request to server for another fact
+      //TODO: Send request with history counter to server
+      //TODO: Reset history counter
+    }else{
+      //TODO: Increment history counter on toy to send when connection finally made
+    }
     sampleAcceleration(50); // set delay long enough to  for fact to be played
   } else {
     x_prev = ax;
@@ -289,7 +363,41 @@ void sampleAcceleration(int samples) {
   }
 }
 
+// this method makes a HTTP GET connection to the server
+bool factRequestSuccessful()
+{
+  Serial.println();
+    
+  // close any connection before send a new request
+  // this will free the socket on the WiFi shield
+  client.stop();
+
+  // if there's a successful connection
+  if (client.connect(server, 80)) {
+    Serial.println("Connecting...");
+    
+    // send the HTTP PUT request
+    client.println("GET /Trivia/" + String(userID) + " HTTP/1.1");
+    client.println("Host: triviotoy.azurewebsites.net");
+    client.println("Connection: close");
+    client.println();
+
+    //successful connection
+    return true;
+  }
+  else {
+    // if you couldn't make a connection
+    return false;
+  }
+}
+
 void loop() {
+  //if there's incoming data over server connection, read in the fact
+  readInFact();
+
+  //if fact has been read in -> cache fact and reset string for next retrieval
+  resetFact();
+  
   checkAcceleration();
   //if (ax == 0 && ay == 0 && az == 0) testConnection();
 }
