@@ -106,6 +106,7 @@ void connectToNetwork()
   }
 }
 
+/*
  * Call this function to get number to return to server for how many facts has been played
  */
 // get number of facts played since last server pull
