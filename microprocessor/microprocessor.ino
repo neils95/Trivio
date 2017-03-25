@@ -18,19 +18,13 @@ int16_t startingAddress = 4;
 SoftwareSerial Serial1(6, 7); // RX, TX
 #endif
 
-char ssid[] = "DanseyPhone";            // your network SSID (name)
-char pass[] = "12345679";        // your network password
 int userID = 3;                 // which user is using ball
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 char server[] = "triviotoy.azurewebsites.net";
-const String playFilename = "factNumber.txt"; // file that stores filename of next fact to be played
-String factFilename = "0";  // filename of next fact to be played
+
+//char factFilename[] = "0";  // filename of next fact to be played
 const int MAXFILENUM = 2000;  // maximum number of files for facts
-const String writeFilename = "writeNumber.txt"; // file that stores filename of next fact to be stored
 int writeFileNumber = 0;  // filename of next fact to be stored
-const String serverCountFile = "serverCountFile.txt"; // file that stores how many facts have been played since last server update
-const String txt = ".txt"; 
-boolean isFact = false;
 String fact = "";
 
 WiFiEspClient client;
@@ -48,37 +42,34 @@ void setup() {
   
 
   // initialize emic devices
-  Serial.println("Intializing emic device...");
-  emic.begin(rxpin, txpin);
+  Serial.println(F("Intializing emic device..."));
+  /*emic.begin(rxpin, txpin);
   emic.setVoice(8); // sets the voice, there are 9 types, 0 - 8
   emic.setVolume(10); // sets the vloume, 10 is max 
+  */
   
   // initialize device
-  Serial.println("Initializing I2C devices...");
+  Serial.println(F("Initializing I2C devices..."));
   accelgyro.initialize();
+  
+  // verify connection
+  testConnection();
 
   // initialize serial for ESP module
   Serial1.begin(9600);
   // initialize ESP module
   WiFi.init(&Serial1);
 
-
   // attempt to connect to WiFi network
   connectToNetwork();
-  
-  // verify connection
-  testConnection();
 
-  Serial.print("EEPROM length: ");
-  Serial.println(EEPROM.length());
-  //resetEEPROM(); // clears fact storage
-
+  setupSD();
   // get filename of last stored fact
   getFactStorageIndex();
 }
 
 void testConnection() {
-  Serial.println("Testing device connections...");
+  Serial.println(F("Testing device connections..."));
   bool accelConnection = accelgyro.testConnection();
   Serial.println(accelConnection ? "MPU6050 connection successful" : "MPU6050 connection failed. Retrying.");
 
@@ -86,10 +77,26 @@ void testConnection() {
     accelConnection = accelgyro.testConnection();
     delay(500);
   }
-  Serial.println("MPU6050 connected");
+  Serial.println(F("MPU6050 connected"));
 
   // set previous accelerations
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
+}
+
+void setupSD() {
+  
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  pinMode(10, OUTPUT);
+  
+  Serial.print(F("Initializing SD card..."));
+
+  if (!SD.begin(10)) {
+    Serial.println(F("initialization failed!"));
+    return;
+  }
+  Serial.println(F("initialization done."));
 }
 
 /**
@@ -98,8 +105,10 @@ void testConnection() {
  */
 void connectToNetwork()
 {
+  char ssid[] = "DanseyPhone";            // your network SSID (name)
+  char pass[] = "12345679";        // your network password
   if ( status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to WPA SSID: ");
+    Serial.print(F("Attempting to connect to WPA SSID: "));
     Serial.println(ssid);
     // Connect to WPA/WPA2 network
     status = WiFi.begin(ssid, pass);
@@ -111,6 +120,7 @@ void connectToNetwork()
  */
 // get number of facts played since last server pull
 int getServerPlayCount() {
+  char serverCountFile[] = "s.txt";
   String numString = "";
   int number = 0;
   if(SD.exists(serverCountFile)) {
@@ -131,6 +141,7 @@ int getServerPlayCount() {
 
 // updates count of how many facts have been played since last server pull
 void updateServerPlayCount() {
+  char serverCountFile[] = "s.txt";
   int number = getServerPlayCount();
   number++;
   String numString = "";
@@ -149,6 +160,7 @@ void updateServerPlayCount() {
 
 // resets count played back to 0 since last server update
 void resetServerPlayCount() {
+  char serverCountFile[] = "s.txt";
   if(SD.exists(serverCountFile)) {
     // read/write from file
     File file = SD.open(serverCountFile);
@@ -162,7 +174,10 @@ void resetServerPlayCount() {
 }
 
 // gets name of file for fact to be played and stores in global variable
-void getPlayFilename() {
+String getPlayFilename() {
+  Serial.println(F("Getting name of file to be played..."));
+  String factFilename = "";
+  char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
@@ -172,19 +187,23 @@ void getPlayFilename() {
     }
   } else {
     // create file
+    Serial.println(F("No file exists. Creating file..."));
     File file = SD.open(playFilename,"FILE_WRITE");
     file.println("0");
     file.close();
   }
+
+  return factFilename;
 }
 
 // writes to file what fact to play next time
-void updatePlayFileName() {
+void updatePlayFileName(String factFilename) {
   // increment and store fact index to be played next time
   int number = factFilename.toInt();
   number++;
   factFilename = String(number);
   
+  char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
@@ -199,20 +218,24 @@ void updatePlayFileName() {
 
 // gets fact string to play
 String getFactFromFile() {
+  Serial.println(F("Getting Fact from file..."));
   // get name of file to play
-  getPlayFilename();
+  String factFilename = getPlayFilename();
 
   // get fact from file
   String factString = "";
-  if(SD.exists(factFilename + txt)) {
+  if(SD.exists(factFilename + ".txt")) {
     // read from file
-    File file = SD.open(factFilename + txt);
+    File file = SD.open(factFilename + ".txt");
     while(file.available()) {
       factString +=  file.read();
     }
   }
+  else {
+    factString = "No Fact available.";
+  }
   // increment and store fact index to be played next time
-  updatePlayFileName();
+  updatePlayFileName(factFilename);
   return factString;
 }
 
@@ -221,6 +244,7 @@ String getFactFromFile() {
  */
 // stores fact
 void storeFact(String factString) {
+  char txt[] = ".txt";
   File file;
   String filename = String(writeFileNumber) + txt;
   // create/open file and store fact
@@ -240,6 +264,7 @@ void storeFact(String factString) {
 
 // gets index of last stored fact
 void getFactStorageIndex() {
+  char writeFilename = "w.txt";
   File file;
   String number = "0";
   // get filename to store fact as
@@ -264,6 +289,7 @@ void getFactStorageIndex() {
 
 // updates saving index of last stored fact
 void updateFactStorageIndex() {
+  char writeFilename = "w.txt";
   File file;
   if(SD.exists(writeFilename)) {
     // update fact index of last stored
@@ -304,6 +330,7 @@ void getFact() {
  * and reads into a String
  */
 void readInFact(){
+  boolean isFact = false;
   while (client.available()) {
     char c = client.read();
     //begin counting characters in string on " character
@@ -324,7 +351,6 @@ void resetFact(){
   if(fact.length() > 20){
     storeFact(fact);
     Serial.println(fact);
-    isFact = false;
     fact = "";
   }
 }
@@ -332,22 +358,22 @@ void resetFact(){
 // Checks difference in acceleration for throw
 void checkAcceleration() {
   accelgyro.getAcceleration(&ax, &ay, &az);
-  printDebugging(0);
+  //printDebugging(0);
   x_diff = abs(ax - x_prev);
   y_diff = abs(ay - y_prev);
   z_diff = abs(az - z_prev);
-  printDebugging(1);
+  //printDebugging(1);
 
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
-    Serial.println("Throw or shake detected");
-    Serial.println("Stating fact...");
+    Serial.println(F("Throw or shake detected"));
+    Serial.println(F("Stating fact..."));
     getFact(); // Read fact from EEPROM and plays it
-    if(factRequestSuccessful()){ //make request to server for another fact
+    /*if(factRequestSuccessful()){ //make request to server for another fact
       //TODO: Send request with history counter to server
       //TODO: Reset history counter
     }else{
       //TODO: Increment history counter on toy to send when connection finally made
-    }
+    }*/
     sampleAcceleration(50); // set delay long enough to  for fact to be played
   } else {
     x_prev = ax;
@@ -400,32 +426,31 @@ void loop() {
   resetFact();
   
   checkAcceleration();
-  //if (ax == 0 && ay == 0 && az == 0) testConnection();
 }
 
 // Function serial prints for debuging purposes
 void printDebugging(int function) {
   switch (function) {
     case 0: // Print acceleration
-      Serial.print("Ax: ");
+      Serial.print(F("Ax: "));
       Serial.println(ax);
-      Serial.print("Ay: ");
+      Serial.print(F("Ay: "));
       Serial.println(ay);
-      Serial.print("Az: ");
+      Serial.print(F("Az: "));
       Serial.println(az);
-      Serial.print("Ax previous: ");
+      Serial.print(F("Ax previous: "));
       Serial.println(x_prev);
-      Serial.print("Ay previous: ");
+      Serial.print(F("Ay previous: "));
       Serial.println(y_prev);
-      Serial.print("Az previous: ");
+      Serial.print(F("Az previous: "));
       Serial.println(z_prev);
       break;
     case 1: // Print acceleration differences for testing purposes
-      Serial.print("x diff: ");
+      Serial.print(F("x diff: "));
       Serial.println(x_diff);
-      Serial.print("y diff: ");
+      Serial.print(F("y diff: "));
       Serial.println(y_diff);
-      Serial.print("z diff: ");
+      Serial.print(F("z diff: "));
       Serial.println(z_diff);
       break;
   }
