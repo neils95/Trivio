@@ -3,7 +3,6 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 #include <Wire.h>
-#include <EEPROM.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
 //need to add the emic 2 library
@@ -26,6 +25,7 @@ char server[] = "triviotoy.azurewebsites.net";
 const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
 String fact = "";
+int NUMBER_OF_FILES = 1;
 
 WiFiEspClient client;
 EMIC2 emic;
@@ -43,10 +43,10 @@ void setup() {
 
   // initialize emic devices
   Serial.println(F("Intializing emic device..."));
-  /*emic.begin(rxpin, txpin);
+  emic.begin(rxpin, txpin);
   emic.setVoice(8); // sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(10); // sets the vloume, 10 is max 
-  */
+  emic.setVolume(10); // sets the volume, 10 is max 
+  
   
   // initialize device
   Serial.println(F("Initializing I2C devices..."));
@@ -127,7 +127,9 @@ int getServerPlayCount() {
     File file = SD.open(serverCountFile);
     while(file.available()) {
       char numChar = file.read();
-      numString += numChar;
+      if(numChar != '\n') {
+        numString += numChar;
+      }
     }
     number = numString.toInt();
     file.close();
@@ -147,18 +149,19 @@ void updateServerPlayCount() {
   int number = getServerPlayCount();
   if(number < MAXFILENUM) {
     number++;
-  }
-  String numString = "";
-  if(SD.exists(serverCountFile)) {
-    // write file
-    File file = SD.open(serverCountFile);
-    file.println(String(number));
-    file.close();
-  } else {
-    // create file
-    File file = SD.open(serverCountFile,"FILE_WRITE");
-    file.println("0");
-    file.close();
+  
+    String numString = "";
+    if(SD.exists(serverCountFile)) {
+      // write file
+      File file = SD.open(serverCountFile);
+      file.println(String(number));
+      file.close();
+    } else {
+      // create file
+      File file = SD.open(serverCountFile,"FILE_WRITE");
+      file.println("0");
+      file.close();
+    }
   }
   delay(500);
 }
@@ -182,7 +185,7 @@ void resetServerPlayCount() {
 
 // gets name of file for fact to be played and stores in global variable
 String getPlayFilename() {
-  Serial.println(F("Getting file to be played: "));
+  Serial.print(F("Getting file to be played: "));
   String factFilename = "0";
   char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
@@ -192,7 +195,9 @@ String getPlayFilename() {
       factFilename = "";
       while(file.available()) {
         char ltr = file.read();
-        factFilename += ltr;
+        if(ltr != '\n') {
+          factFilename += ltr;
+        }
       }
       Serial.println(factFilename);
       file.close();
@@ -236,29 +241,33 @@ void updatePlayFileName(String factFilename) {
 // gets fact string to play
 String getFactFromFile() {
   // get name of file to play
-  String factFilename = getPlayFilename() + ".txt";
-  
-  Serial.println(F("Opening file: "));
+  String factFilename = getPlayFilename();
+  factFilename.trim();
+  int number = factFilename.toInt();
+  factFilename = factFilename + ".txt";
+  Serial.print(F("Opening file: "));
   Serial.println(factFilename);
 
   // get fact from file
   String factString = "";
-  if(SD.exists(factFilename)) {
+  // re-open the file for reading:
+  File file = SD.open(factFilename);
+  if (file) {
     // read from file
-    File file = SD.open(factFilename);
     while(file.available()) {
       char ltr =  file.read();
-      Serial.write(ltr);
-      factString += ltr;
+      if(ltr != '\n') {
+        factString += ltr;
+      }
     }
     file.close();
+    delay(500);
+    // increment and store fact index to be played next time
+    updatePlayFileName(factFilename);
+  } else {
+    factString = "No fact available.";
   }
-  else {
-    factString = "No Fact available.";
-  }
-  delay(500);
-  // increment and store fact index to be played next time
-  updatePlayFileName(factFilename);
+  
   return factString;
 }
 
@@ -283,6 +292,7 @@ void storeFact(String factString) {
 
   // increment name of file to store next fact as
   writeFileNumber++;
+  delay(500);
 }
 
 // gets index of last stored fact
@@ -297,7 +307,9 @@ void getFactStorageIndex() {
     file = SD.open(writeFilename);
     while(file.available()) {
       char num = file.read();
-      number += num;
+      if(num != '\n') {
+        number += num;
+      }
     }
     file.close();
   } else {
@@ -341,11 +353,10 @@ void updateFactStorageIndex() {
 
 // plays fact on TTS module
 void playFact(String fact) {
-  Serial.println(F("Fact: "));
+  Serial.print(F("Fact: "));
   Serial.println(fact);
-  //updateServerPlayCount();
   emic.speak(fact);
-  delay(300);
+  updateServerPlayCount();
 }
 
 /**
@@ -353,8 +364,7 @@ void playFact(String fact) {
  */
 // get fact when shake or throw is detected
 void getFact() {
-  String fact;
-  fact = getFactFromFile();
+  String fact = getFactFromFile();
   delay(100);
   playFact(fact);
 }
@@ -389,6 +399,15 @@ void resetFact(){
   }
 }
 
+void makeFactRequest() {
+  if(factRequestSuccessful()){ //make request to server for another fact
+      //TODO: Send request with history counter to server
+      //TODO: Reset history counter
+    }else{
+      //TODO: Increment history counter on toy to send when connection finally made
+    }
+}
+
 // Checks difference in acceleration for throw
 void checkAcceleration() {
   accelgyro.getAcceleration(&ax, &ay, &az);
@@ -397,17 +416,11 @@ void checkAcceleration() {
   y_diff = abs(ay - y_prev);
   z_diff = abs(az - z_prev);
   //printDebugging(1);
-
+  //makeFactRequest();
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println(F("Throw or shake detected"));
-    Serial.println(F("Stating fact..."));
     getFact(); // Read fact from EEPROM and plays it
-    /*if(factRequestSuccessful()){ //make request to server for another fact
-      //TODO: Send request with history counter to server
-      //TODO: Reset history counter
-    }else{
-      //TODO: Increment history counter on toy to send when connection finally made
-    }*/
+    
     sampleAcceleration(50); // set delay long enough to  for fact to be played
   } else {
     x_prev = ax;
@@ -460,6 +473,7 @@ void loop() {
   //resetFact();
   
   checkAcceleration();
+  Serial.println(F("Loop"));
 }
 
 // Function serial prints for debuging purposes
