@@ -137,6 +137,7 @@ int getServerPlayCount() {
     file.println("0");
     file.close();
   }
+  delay(500);
   return number;
 }
 
@@ -144,7 +145,9 @@ int getServerPlayCount() {
 void updateServerPlayCount() {
   char serverCountFile[] = "s.txt";
   int number = getServerPlayCount();
-  number++;
+  if(number < MAXFILENUM) {
+    number++;
+  }
   String numString = "";
   if(SD.exists(serverCountFile)) {
     // write file
@@ -157,6 +160,7 @@ void updateServerPlayCount() {
     file.println("0");
     file.close();
   }
+  delay(500);
 }
 
 // resets count played back to 0 since last server update
@@ -173,11 +177,12 @@ void resetServerPlayCount() {
     file.println("0");
     file.close();
   }
+  delay(500);
 }
 
 // gets name of file for fact to be played and stores in global variable
 String getPlayFilename() {
-  Serial.println(F("Getting name of file to be played..."));
+  Serial.println(F("Getting file to be played: "));
   String factFilename = "0";
   char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
@@ -189,9 +194,8 @@ String getPlayFilename() {
         char ltr = file.read();
         factFilename += ltr;
       }
+      Serial.println(factFilename);
       file.close();
-    } else {
-      Serial.println(F("Error reading from file."));
     }
   } else {
     // create file
@@ -199,11 +203,10 @@ String getPlayFilename() {
     if(file) {
       file.println("0");
       file.close();
-      Serial.println(F("No file exists. File created."));
+      Serial.println(F("DNE. File created."));
     }
   }
-  Serial.print(F("Name of file: "));
-  Serial.println(factFilename);
+  delay(500);
   return factFilename;
 }
 
@@ -213,7 +216,6 @@ void updatePlayFileName(String factFilename) {
   int number = factFilename.toInt();
   number++;
   factFilename = String(number);
-  
   char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
     // read/write from file
@@ -226,16 +228,18 @@ void updatePlayFileName(String factFilename) {
     file.println("0");
     file.close();
   }
+  Serial.print(F("Updating fact Index: "));
+  Serial.println(number);
+  delay(500);
 }
 
 // gets fact string to play
 String getFactFromFile() {
-  Serial.println(F("Getting Fact from file..."));
   // get name of file to play
   String factFilename = getPlayFilename() + ".txt";
-
+  
   Serial.println(F("Opening file: "));
-    Serial.println(factFilename);
+  Serial.println(factFilename);
 
   // get fact from file
   String factString = "";
@@ -244,6 +248,7 @@ String getFactFromFile() {
     File file = SD.open(factFilename);
     while(file.available()) {
       char ltr =  file.read();
+      Serial.write(ltr);
       factString += ltr;
     }
     file.close();
@@ -251,6 +256,7 @@ String getFactFromFile() {
   else {
     factString = "No Fact available.";
   }
+  delay(500);
   // increment and store fact index to be played next time
   updatePlayFileName(factFilename);
   return factString;
@@ -297,12 +303,14 @@ void getFactStorageIndex() {
   } else {
     // create file
     File file = SD.open(writeFilename,"FILE_WRITE");
-    file.println("0");
+    file.println(number);
     file.close();
   }
-
+  Serial.println(F("Last stored fact index: "));
+  Serial.println(number);
   // sets it as global variable
   writeFileNumber = number.toInt();
+  delay(500);
 }
 
 // updates saving index of last stored fact
@@ -328,14 +336,16 @@ void updateFactStorageIndex() {
     file.println("0");
     file.close();
   }
+  delay(500);
 }
 
 // plays fact on TTS module
 void playFact(String fact) {
   Serial.println(F("Fact: "));
   Serial.println(fact);
-  updateServerPlayCount();
+  //updateServerPlayCount();
   emic.speak(fact);
+  delay(300);
 }
 
 /**
@@ -345,6 +355,7 @@ void playFact(String fact) {
 void getFact() {
   String fact;
   fact = getFactFromFile();
+  delay(100);
   playFact(fact);
 }
 
