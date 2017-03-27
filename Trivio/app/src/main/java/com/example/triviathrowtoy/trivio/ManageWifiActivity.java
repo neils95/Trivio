@@ -99,6 +99,9 @@ public class ManageWifiActivity extends AppCompatActivity {
 
     /** Called when the user clicks the connect button */
     public void sendConnection(View view) {
+        if(wifiReceiver != null) {
+            unregisterReceiver(wifiReceiver);
+        }
         showProgress(true);
         server.sendCredentials(selectedWifi.SSID,"pen15LMN");
     }
@@ -128,9 +131,9 @@ public class ManageWifiActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        if(wifiReceiver != null) {
-            unregisterReceiver(wifiReceiver);
-        }
+//        if(wifiReceiver != null) {
+//            unregisterReceiver(wifiReceiver);
+//        }
         super.onPause();
     }
 
@@ -146,9 +149,9 @@ public class ManageWifiActivity extends AppCompatActivity {
 //        if(server != null) {
 //            server.onDestroy();
 //        }
-        if(wifiReceiver != null) {
-            unregisterReceiver(wifiReceiver);
-        }
+//        if(wifiReceiver != null) {
+//            unregisterReceiver(wifiReceiver);
+//        }
     }
 
     /** Called when the user clicks the connectWifi button */

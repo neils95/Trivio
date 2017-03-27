@@ -1,5 +1,7 @@
 package com.example.triviathrowtoy.trivio;
 
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -12,6 +14,8 @@ import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by Christine on 2/22/2017.
@@ -101,7 +105,7 @@ public class Server {
 
 
             // send confirmation of socket connection
-            String confirmation = "okay";
+            String confirmation = "ok";
             try {
                 outputStream = hostThreadSocket.getOutputStream();
                 PrintStream printStream = new PrintStream(outputStream);
@@ -114,7 +118,7 @@ public class Server {
 
                 Log.d("SOCKET_SERVER", "received message: " + message);
 
-                if(message.equals("hello")) {
+                if(message.equals("ok")) {
                     Log.d("SOCKET_SERVER", "connection confirmed");
                     activity.runOnUiThread(new Runnable() {
 
@@ -124,62 +128,78 @@ public class Server {
                         }
                     });
 
+                    boolean sendCredentials = true;
                     // Waiting on sending credentials
                     while(pendingCredentials) {
                         if(send) {
-                            // Send credentials
-                            Log.d("SOCKET_STREAM", "sending credentials.");
-                            String msgReply = SSID + ":" + password;
-                            //outputStream = hostThreadSocket.getOutputStream();
-                            //printStream = new PrintStream(outputStream);
-                            printStream.print(msgReply);
-                            printStream.flush();
+                            if(sendCredentials) {
+                                // Send credentials
+                                Log.d("SOCKET_STREAM", "sending credentials.");
+                                String msgReply = SSID + ":" + password;
+                                printStream.print(msgReply);
+                                printStream.flush();
+                                sendCredentials = false;
+                            }
 
                             message = getInputStream(hostThreadSocket);
                             Log.d("WIFI_CONNECTION_RESULT", message);
 
-                            if(message.equals("connected")) {
+                            if(message.equals("yes")) {
                                 activity.runOnUiThread(new Runnable() {
 
                                     @Override
                                     public void run() {
+                                        pendingCredentials = false;
                                         activity.setSuccess(true);
                                     }
                                 });
-                            } else {
+                            } else if(message.equals("no")){
                                 activity.runOnUiThread(new Runnable() {
 
                                     @Override
                                     public void run() {
+                                        pendingCredentials = false;
                                         activity.setSuccess(false);
                                     }
                                 });
                             }
-                            pendingCredentials = false;
                         }
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-//                if(in != null) {
-//                    try {
-//                        in.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
+                //
             }
+        }
+
+        boolean wait = true;
+        private void setWait(boolean waitSetting) {
+            wait = waitSetting;
         }
 
         private String getInputStream(Socket socket) {
             String input = "";
-            //DataInputStream in = null;
+            setWait(true);
+
+            new Timer().schedule(
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            setWait(false);
+                        }
+                    },
+                    3000
+            );
+
+            while(wait) {
+                //
+            }
+
             try {
                 if(in == null) {
                     in = new DataInputStream(socket.getInputStream());
                 }
-                int bytesRead = 0;
                 byte[] messageByte = new byte[1000];
 
                 int i = 0;
@@ -189,23 +209,7 @@ public class Server {
                     System.out.println("Byte read: " + c);
                     input += String.valueOf(c);
                     i++;
-                    //messageByte[1] = in.readByte();
                 }
-//                ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
-//
-//                int bytesToRead = byteBuffer.getShort();
-//                System.out.println("About to read " + bytesToRead + " octets");
-//
-//                i = 0;
-//                while(input.length() != bytesToRead) {
-//                    if(messageByte[i] == 0) {
-//                        break;
-//                    }
-//                    char c = (char) messageByte[i];
-//                    System.out.println("Byte Buffer: " + c);
-//                    input += String.valueOf(c);
-//                    i++;
-//                }
 
             } catch (IOException e) {
                 e.printStackTrace();
