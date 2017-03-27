@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -32,7 +33,6 @@ public class ManageWifiActivity extends AppCompatActivity {
     private WifiManager wifiManager;
     private View mProgressView;
     private ScanResult selectedWifi;
-//    private String WIFI_PARCEL = "WIFI_PARCEL";
 
     //Views
     RelativeLayout phoneConnectionActivity;
@@ -44,8 +44,7 @@ public class ManageWifiActivity extends AppCompatActivity {
     private TextView waitingTextView;
     Server server;
 
-    private String address;
-    private int port;
+    private String userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,11 +54,8 @@ public class ManageWifiActivity extends AppCompatActivity {
         manageWifiActivity = (RelativeLayout)findViewById(R.id.manageWifiActivity);
         credentialActivity = (RelativeLayout)findViewById(R.id.credentialActivity);
         successActivity = (RelativeLayout)findViewById(R.id.successStatusActivity);
-//
-//        Bundle bundle = getIntent().getExtras();
-//        address = bundle.getString(CheckPhoneConnectionActivity.ADDRESS_PARCEL);
-//        port = bundle.getInt(CheckPhoneConnectionActivity.PORT_PARCEL);
-//        setScanWifiActivity();
+
+        userID = SaveSharedPreferences.getUserID(this);
 
         setCheckPhoneConnection();
     }
@@ -103,7 +99,11 @@ public class ManageWifiActivity extends AppCompatActivity {
             unregisterReceiver(wifiReceiver);
         }
         showProgress(true);
-        server.sendCredentials(selectedWifi.SSID,"pen15LMN");
+        EditText mPasswordView;
+        mPasswordView = (EditText) findViewById(R.id.wifiPassword);
+        String password = mPasswordView.getText().toString();
+        //password = "pen15LMN";
+        server.sendCredentials(userID,selectedWifi.SSID,password);
     }
 
     private void checkPhoneConnection() {

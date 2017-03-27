@@ -146,7 +146,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/wifiName">
-
+<!--
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -155,19 +155,32 @@
                 android:hint="@string/prompt_password"
                 android:ems="10"
                 android:layout_centerHorizontal="true"
-                android:id="@+id/wifiPassword" />
+                android:id="@+id/wifiPassword" />-->
 
-            <Button
-                android:text="@string/connect"
-                android:layout_width="fill_parent"
+            <EditText
+                android:id="@+id/wifiPassword"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:layout_below="@+id/wifiPassword"
-                android:layout_centerHorizontal="true"
-                android:id="@+id/sendConnect"
-                android:onClick="sendConnection"/>
+                android:hint="@string/prompt_password"
+                android:imeActionId="@+id/login"
+                android:imeActionLabel="@string/action_sign_in_short"
+                android:imeOptions="actionUnspecified"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:singleLine="true" />
 
         </android.support.design.widget.TextInputLayout>
+
+        <Button
+            android:text="@string/connect"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_below="@+id/wifiPassword"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/sendConnect"
+            android:onClick="sendConnection"/>
 
         <ProgressBar
             android:id="@+id/connect_toy_progress"

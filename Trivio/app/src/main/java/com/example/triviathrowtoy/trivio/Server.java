@@ -27,6 +27,7 @@ public class Server {
     private String message = "";
     private static final int socketServerPORT = 8080;
 
+    private String userID = "";
     private String SSID = "";
     private String password = "";
     private Boolean send = false;
@@ -54,7 +55,8 @@ public class Server {
 //        }
 //    }
 
-    public void sendCredentials(String ssid, String pw) {
+    public void sendCredentials(String userid, String ssid, String pw) {
+        userID = userid;
         SSID = ssid;
         password = pw;
         send = true;
@@ -135,7 +137,7 @@ public class Server {
                             if(sendCredentials) {
                                 // Send credentials
                                 Log.d("SOCKET_STREAM", "sending credentials.");
-                                String msgReply = SSID + ":" + password;
+                                String msgReply = userID + ":" + SSID + ":" + password;
                                 printStream.print(msgReply);
                                 printStream.flush();
                                 sendCredentials = false;
