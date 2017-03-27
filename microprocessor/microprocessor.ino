@@ -473,7 +473,6 @@ void loop() {
   //resetFact();
   
   checkAcceleration();
-  Serial.println(F("Loop"));
 }
 
 // Function serial prints for debuging purposes
