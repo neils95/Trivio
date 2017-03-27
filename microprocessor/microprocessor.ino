@@ -149,6 +149,53 @@ void connectToNetwork()
   }
 }
 
+// stores user id
+void setUserId(String id) {
+  char filename = "u.txt";
+  File file;
+  if(SD.exists(filename)) {
+    file = SD.open(filename);
+    file.println(id);
+    file.close();
+  } else { // create file
+    File file = SD.open(filename,"FILE_WRITE");
+    file.println(id);
+    file.close();
+  }
+  // update global variable
+  userID = id.toInt();
+  delay(500);
+}
+
+// gets user id
+void getUserId() {
+  char filename = "u.txt";
+  File file;
+  String number = "3";
+  // get filename to store fact as
+  if(SD.exists(filename)) {
+    number = "";
+    file = SD.open(filename);
+    while(file.available()) { // read from file
+      char num = file.read();
+      if(num != '\n') {
+        number += num;
+      }
+    }
+    number.trim();
+    file.close();
+  } else {
+    // create file
+    file = SD.open(filename,"FILE_WRITE");
+    file.println(number);
+    file.close();
+  }
+  Serial.print(F("ID: "));
+  Serial.println(number);
+  userID = number.toInt(); // update global variable
+  delay(500);
+}
+
 /*
  * Call this function to get number to return to server for how many facts has been played
  */
