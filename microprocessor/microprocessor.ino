@@ -36,6 +36,35 @@ int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
 int32_t threshold = 10000;      // threshold for difference in acceleration
 
+// led
+const int redPin = 16;
+const int greenPin = 15;
+const int bluePin = 14;
+
+// buttons
+const int volumeDownButton = 5;
+const int volumeUpButton = 6;
+const int wifiButton = 7;
+
+int volumeDownButtonState;            // current reading of button
+int lastVolumeDownButtonState = LOW;  // the previous reading from the input pin
+long lastVolumeDownDebounceTime = 0;  // the last time button was toggled
+
+int volumeUpButtonState;              // current reading of button
+int lastVolumeUpButtonState = LOW;    // the previous reading from the input pin
+long lastVolumeUpDebounceTime = 0;    // the last time button was toggled
+
+int wifiButtonState;            // current reading of button
+int lastWifiButtonState = LOW;  // the previous reading from the input pin
+long lastWifiDebounceTime = 0;  // the last time button was toggled
+bool wifiSetupMode = false;
+
+long debounceDelay = 50;    // the debounce time, increase if output flickers
+
+//volume control
+int volume = 10;
+
+
 void setup() {
   Serial.begin(9600);
   Wire.begin();
@@ -45,7 +74,7 @@ void setup() {
   Serial.println(F("Intializing emic device..."));
   emic.begin(rxpin, txpin);
   emic.setVoice(8); // sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(10); // sets the volume, 10 is max 
+  emic.setVolume(volume); // sets the volume, 10 is max 
   
   
   // initialize device
@@ -66,6 +95,11 @@ void setup() {
   setupSD();
   // get filename of last stored fact
   getFactStorageIndex();
+
+  // set LED outputs
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
 }
 
 void testConnection() {
@@ -465,6 +499,136 @@ bool factRequestSuccessful()
   }
 }
 
+//Write to analog outputs
+void set_color(int setting) {
+  int red = 0;
+  int green = 0;
+  int blue = 0;
+
+  switch(setting) {
+    case 0: { // red - low battery
+      red = 255;
+      break;
+    }
+    case 1: { // green - connected to wifi
+      green = 255;
+      break;
+    }
+    case 2: { // purple - not connected to wifi
+      red = 255;
+      blue = 255;
+      break;
+    }
+    case 3: { // blue - updating from server
+      blue = 255;
+      break;
+    }
+    case 4: { // white - wifi connect mode
+      red = 255;
+      blue = 255;
+      green = 255;
+      break;
+    }
+    default: { // off
+      break;
+    }
+  }
+  
+  uint8_t redIn = 255 - uint8_t(red);
+  uint8_t greenIn = 255 - uint8_t(green);
+  uint8_t blueIn = 255 - uint8_t(blue);
+
+  analogWrite(redPin, redIn);
+  analogWrite(greenPin, greenIn);
+  analogWrite(bluePin, blueIn);
+}
+
+// detects input of volume button with debouncing
+void checkVolumeDownInput() {
+  int reading = digitalRead(volumeDownButton);  // current reading of button, debouncing
+
+  // switch changed due to noise or pressing
+  if (reading != lastVolumeDownButtonState) {
+    lastVolumeDownDebounceTime = millis();      // reset the debouncing timer
+  }
+
+  // delay time for debouncing has been reached
+  if ((millis() - lastVolumeDownDebounceTime) > debounceDelay) {
+
+    if (reading != volumeDownButtonState) {     // button state changed
+      volumeDownButtonState = reading;
+
+      // button press was detected with debouncing taken into account
+      if (volumeDownButtonState == LOW) {
+        Serial.println(F("V down"));
+        if(volume > 0) {
+          volume--;
+        }
+        emic.setVolume(volume);
+      }
+    }
+  }
+  lastVolumeDownButtonState = reading;
+}
+
+// detects input of volume button with debouncing
+void checkVolumeUpInput() {
+  int reading = digitalRead(volumeUpButton);  // current reading of button, debouncing
+
+  // switch changed due to noise or pressing
+  if (reading != lastVolumeUpButtonState) {
+    lastVolumeUpDebounceTime = millis();      // reset the debouncing timer
+  }
+
+  // delay time for debouncing has been reached
+  if ((millis() - lastVolumeUpDebounceTime) > debounceDelay) {
+
+    if (reading != volumeUpButtonState) {     // button state changed
+      volumeUpButtonState = reading;
+
+      // button press was detected with debouncing taken into account
+      if (volumeUpButtonState == LOW) {
+        Serial.println(F("V up"));
+        if(volume < 10) {
+          volume++;
+        }
+        emic.setVolume(volume);
+      }
+    }
+  }
+  lastVolumeUpButtonState = reading;
+}
+
+// detects input of volume button with debouncing
+void checkWifiButtonInput() {
+  int reading = digitalRead(wifiButton);  // current reading of button, debouncing
+
+  // switch changed due to noise or pressing
+  if (reading != lastWifiButtonState) {
+    lastWifiDebounceTime = millis();      // reset the debouncing timer
+  }
+
+  // delay time for debouncing has been reached
+  if ((millis() - lastWifiDebounceTime) > (debounceDelay * 5)) {
+
+    if (reading != wifiButtonState) {     // button state changed
+      wifiButtonState = reading;
+
+      // button press was detected with debouncing taken into account
+      if (wifiButtonState == LOW) {
+        Serial.println(F("Wifi setup mode"));
+        wifiSetupMode = !wifiSetupMode;
+        
+        if(wifiSetupMode) {
+          set_color(4);
+          //TODO: put function to call wifi setup mode here
+        }
+      }
+    }
+  }
+  lastWifiButtonState = reading;
+}
+
 void loop() {
   //if there's incoming data over server connection, read in the fact
   //readInFact();
@@ -473,6 +637,10 @@ void loop() {
   //resetFact();
   
   checkAcceleration();
+
+  checkVolumeDownInput();
+  checkVolumeUpInput();
+  checkWifiButtonInput();
 }
 
 // Function serial prints for debuging purposes
