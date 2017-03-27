@@ -302,8 +302,6 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
         HttpPostRequest postRequest = new HttpPostRequest();
         try {
             result = postRequest.execute(PostRequestUrl, jsonString).get();
-
-            Log.d("POST_REQUEST",result);
         }
         catch (Exception e)
         {
@@ -319,6 +317,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
             return false;
         }
 
+        Log.d("POST_REQUEST",result);
 
         return parseJSONResult(result);
     }
