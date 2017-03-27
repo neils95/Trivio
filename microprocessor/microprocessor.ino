@@ -7,14 +7,14 @@
 #include "WiFiEsp.h"
 //need to add the emic 2 library
 
-#define rxpin 4
-#define txpin 5
+#define rxpin 3
+#define txpin 4
 int16_t startingAddress = 4;
 
 // Emulate Serial1 on pins 6/7 if not present
 #ifndef HAVE_HWSERIAL1
 #include "SoftwareSerial.h"
-SoftwareSerial Serial1(6, 7); // RX, TX
+SoftwareSerial Serial1(9, 8); // RX, TX
 #endif
 
 int userID = 3;                 // which user is using ball
