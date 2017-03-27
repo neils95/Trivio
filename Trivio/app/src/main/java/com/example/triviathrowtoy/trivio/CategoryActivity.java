@@ -22,9 +22,9 @@ public class CategoryActivity extends AppCompatActivity {
         categoryListView = (ListView)findViewById(R.id.categoryListView);
 
         categoryList.add("Random");
-        categoryList.add("Science");
-        categoryList.add("Sports");
-        categoryList.add("History");
+        //categoryList.add("Science");
+        //categoryList.add("Sports");
+        //categoryList.add("History");
 
         setListView();
     }
