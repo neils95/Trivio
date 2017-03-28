@@ -118,9 +118,14 @@ void connect_to_wifi() {
 //breaking the credentials received from the phone in the format "ssid:pass"
 bool break_credentials(String data) {
   if(data.length() > 0) {
-    int colon_index = data.indexOf(':');
-    ssid = data.substring(0, colon_index);
-    pass = data.substring(colon_index + 1);
+    int colon_first = data.indexOf(':');
+    String userid = data.substring(0, colon_first);
+    String creds = data.substring(colon_first + 1);
+    int colon_second = creds.indexOf(':');
+    ssid = creds.substring(0, colon_second);
+    pass = creds.substring(colon_second + 1);
+    Serial.print("userid: ");
+    Serial.println(userid);
     Serial.print("ssid: ");
     Serial.println(ssid);
     Serial.print("pass: ");
@@ -132,9 +137,9 @@ bool break_credentials(String data) {
 
 //Breaking the IP of device connected as it is given as "ip,mac-address" 
 String break_ip(String ip) {
-  String actual_ip;
+  int comma_index = ip.indexOf(',');
+  String actual_ip = "";
   if(ip.length() > 0) {
-      int comma_index = ip.indexOf(',');
       actual_ip = ip.substring(0, comma_index);
       return actual_ip;
     }
