@@ -2,7 +2,6 @@
 #include <SD.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include <Wire.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
 #include "ESP8266.h"
@@ -21,7 +20,6 @@ int userID = 3;                 // which user is using ball
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 char server[] = "triviotoy.azurewebsites.net";
 
-//char factFilename[] = "0";  // filename of next fact to be played
 const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
 String fact = "";
@@ -71,8 +69,6 @@ short int volume = 10;
 
 void setup() {
   Serial.begin(9600);
-  Wire.begin();
-  
 
   // initialize emic devices
   Serial.println(F("Intializing emic device..."));
@@ -134,7 +130,7 @@ void espSetup() {
 void testConnection() {
   Serial.println(F("Testing device connections..."));
   bool accelConnection = accelgyro.testConnection();
-  Serial.println(accelConnection ? "MPU6050 connection successful" : "MPU6050 connection failed. Retrying.");
+  //Serial.println(accelConnection ? "MPU6050 connection successful" : "MPU6050 connection failed. Retrying.");
 
   while (accelConnection == false) { // keep testing connection if failed
     accelConnection = accelgyro.testConnection();
@@ -168,8 +164,8 @@ void setupSD() {
  */
 void connectToNetwork()
 {
-  ssid = "Neil";            // your network SSID (name)
-  pass = "0123456789";        // your network password
+  char ssid[] = "Neil";            // your network SSID (name)
+  char pass[] = "0123456789";        // your network password
   if ( status != WL_CONNECTED) {
     Serial.print(F("Attempting to connect to WPA SSID: "));
     Serial.println(ssid);
@@ -357,7 +353,6 @@ String getFactFromFile() {
   factFilename = factFilename + ".txt";
   Serial.print(F("Opening file: "));
   Serial.println(factFilename);
-  factFilename.trim();
 
   // get fact from file
   String factString = "";
@@ -707,6 +702,16 @@ void checkWifiButtonInput() {
     }
   }
   lastWifiButtonState = reading;
+}
+
+void tcpMode() {
+  //Attempt tcp connection
+  bool tcp_created = create_TCP_connection();
+
+  if(tcp_created) {
+    //function to carry out the connection to the wifi
+    connect_to_wifi();
+  }
 }
 
 void checkButtons() {
