@@ -5,6 +5,8 @@
 #include <Wire.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
+#include "Battery.h"
+#include "VoltageReference.h"
 
 #define rxpin 3
 #define txpin 4
@@ -25,6 +27,10 @@ const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
 String fact = "";
 int NUMBER_OF_FILES = 1;
+
+Battery battery(3700, 4300, A0);
+VoltageReference vRef;
+bool battery_low;
 
 WiFiEspClient client;
 EMIC2 emic;
@@ -91,6 +97,7 @@ void setup() {
 //  // attempt to connect to WiFi network
 //  connectToNetwork();
 
+  batteryVoltageSetup();
   setupSD();
   // get filename of last stored fact
   getFactStorageIndex();
@@ -120,6 +127,11 @@ void testConnection() {
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
 }
 
+void batteryVoltageSetup() {
+  vRef.begin();
+  int vcc = vRef.readVcc();
+  battery.begin(vcc, 1); 
+}
 void setupSD() {
   
   while (!Serial) {
