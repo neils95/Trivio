@@ -32,7 +32,12 @@ namespace Trivio.Controllers
 			}
 
 			//Increment trivia count and return trivia at new row
+			
 			string trivia = (await db.Trivias.FindAsync(++user.TriviaCount)).Text;
+			while(trivia.Length>=150)
+			{
+				trivia = (await db.Trivias.FindAsync(++user.TriviaCount)).Text;
+			}
 
 			await db.SaveChangesAsync();
 

@@ -3,7 +3,4 @@
   <parameter name="TrivioContext-Web.config Connection String" description="TrivioContext Connection String used in web.config by the application to access the database." defaultValue="Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=TrivioContext-20170303171538; Integrated Security=True; MultipleActiveResultSets=True; AttachDbFilename=|DataDirectory|TrivioContext-20170303171538.mdf" tags="SqlConnectionString">
     <parameterEntry kind="XmlFile" scope="C:\\Users\\neils\\Documents\\BU\\Spring\ 2017\\EC464\\Code\\Trivio\\Server\\Trivio\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='TrivioContext']/@connectionString" />
   </parameter>
-  <parameter name="TrivioContext_DatabasePublish-Web.config Connection String" description="TrivioContext_DatabasePublish Connection String used in web.config by the application to access the database." defaultValue="TrivioContext_DatabasePublish.ConnetionString" tags="SqlConnectionString">
-    <parameterEntry kind="XmlFile" scope="C:\\Users\\neils\\Documents\\BU\\Spring\ 2017\\EC464\\Code\\Trivio\\Server\\Trivio\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='TrivioContext_DatabasePublish']/@connectionString" />
-  </parameter>
 </parameters>
