@@ -24,7 +24,7 @@ const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
 int NUMBER_OF_FILES = 1;
 bool readingFromServer = false;
-char fact[140];
+//char fact[140];
 
 WiFiEspClient client;
 EMIC2 emic;
@@ -106,8 +106,10 @@ void setupSD() {
  */
 void connectToNetwork()
 {
-  char ssid[] = "DanseyPhone";            // your network SSID (name)
-  char pass[] = "12345679";        // your network password
+//  char ssid[] = "DanseyPhone";            // your network SSID (name)
+//  char pass[] = "12345679";        // your network password
+  char ssid[] = "Neil";            // your network SSID (name)
+  char pass[] = "0123456789";
   if ( status != WL_CONNECTED) {
     Serial.print(F("Attempting to connect to WPA SSID: "));
     Serial.println(ssid);
@@ -136,7 +138,7 @@ int getServerPlayCount() {
     file.close();
   } else {
     // create file
-    File file = SD.open(serverCountFile,"FILE_WRITE");
+    File file = SD.open(serverCountFile,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -159,7 +161,7 @@ void updateServerPlayCount() {
       file.close();
     } else {
       // create file
-      File file = SD.open(serverCountFile,"FILE_WRITE");
+      File file = SD.open(serverCountFile,FILE_WRITE);
       file.println("0");
       file.close();
     }
@@ -177,7 +179,7 @@ void resetServerPlayCount() {
     file.close();
   } else {
     // create file
-    File file = SD.open(serverCountFile,"FILE_WRITE");
+    File file = SD.open(serverCountFile,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -205,7 +207,7 @@ String getPlayFilename() {
     }
   } else {
     // create file
-    File file = SD.open(playFilename,"FILE_WRITE");
+    File file = SD.open(playFilename,FILE_WRITE);
     if(file) {
       file.println("0");
       file.close();
@@ -230,7 +232,7 @@ void updatePlayFileName(String factFilename) {
     file.close();
   } else {
     // create file
-    File file = SD.open(playFilename,"FILE_WRITE");
+    File file = SD.open(playFilename,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -286,7 +288,7 @@ void storeFact(String factString) {
     file.println(factString);
     file.close();
   } else {
-    File file = SD.open(filename,"FILE_WRITE");
+    File file = SD.open(filename,FILE_WRITE);
     file.println(factString);
     file.close();
   }
@@ -298,7 +300,7 @@ void storeFact(String factString) {
 
 // gets index of last stored fact
 void getFactStorageIndex() {
-  char writeFilename = "w.txt";
+  char writeFilename[] = "w.txt";
   File file;
   String number = "0";
   // get filename to store fact as
@@ -315,7 +317,7 @@ void getFactStorageIndex() {
     file.close();
   } else {
     // create file
-    File file = SD.open(writeFilename,"FILE_WRITE");
+    File file = SD.open(writeFilename,FILE_WRITE);
     file.println(number);
     file.close();
   }
@@ -328,8 +330,8 @@ void getFactStorageIndex() {
 
 // updates saving index of last stored fact
 void updateFactStorageIndex() {
-  Serial.println(F("Updating Fact Storage Index: "));
-  char writeFilename = "w.txt";
+  Serial.println(F("Update Fact Storage Index: "));
+  char writeFilename[] = "w.txt";
   File file;
   if(SD.exists(writeFilename)) {
     // update fact index of last stored
@@ -338,6 +340,8 @@ void updateFactStorageIndex() {
       // if max reached, go back to 0
       if(writeFileNumber > MAXFILENUM) {
         writeFileNumber = 0;
+      } else {
+        writeFileNumber++;
       }
       file.println(String(writeFileNumber));
       file.close();
@@ -345,7 +349,7 @@ void updateFactStorageIndex() {
     }
   } else {
     // create file
-    File file = SD.open(writeFilename,"FILE_WRITE");
+    File file = SD.open(writeFilename,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -370,9 +374,11 @@ void getFact() {
   playFact(fact);
 }
 
+//char fact[140];
+
 /**
- * Detects if server is sending over bits of fact string data
- * and reads into a String
+ * //Detects if server is sending over bits of fact string data
+ * //and reads into a String
  */
 void readInFact(){
   boolean isFact = false;
@@ -384,25 +390,63 @@ void readInFact(){
       isFact = true;
     }
     //write character in to fact string
-    if(isFact == true && c != 34 && i < 138){
-      fact[i] = c;
+    if(isFact == true && c != 34){
+      Serial.write(c);
+      //fact[i] = c;
       i++;
     }
   }
-
-  fact[i] = '\0';
-
-  //formerly resetFact but putting here for now
+  
+  //if fact was pulled in, i will be greater than 1. 
+  //Store end character and flip reading from server to false
   if(i > 20){
-    storeFact(fact);
-    Serial.println(fact);
+    //storeFact(fact);
+    Serial.write('\0');
+    Serial.write('\n');
     readingFromServer = false;
-
-    for(int i = 0; i < 140; i++) {
-      fact[i] = '\0';
-    }
   }
 }
+
+//  if(client.available()) {
+//
+//    getFactStorageIndex();
+//    if(client.available()) {
+//    
+//      File file;
+//      String filename = String(writeFileNumber);
+//      filename = filename + ".txt";
+//      // create/open file and store fact
+//      if(SD.exists(filename)) {
+//        file = SD.open(filename);
+//        Serial.println(F("File opened.."));
+//      } else {
+//        file = SD.open(filename,FILE_WRITE);
+//        Serial.println(F("File created.."));
+//      }
+//    
+//      while (client.available()) {
+//            char c = client.read();
+//            //begin counting characters in string on " character
+//            if(c == 34){
+//              isFact = true;
+//            }
+//            //write character in to fact string
+//            if(isFact == true && c != 34 && i < 138){
+//              //file.print(c);
+//            }
+//          }
+//          
+//        file.print('\0');
+//    
+//      file.close();
+//    
+//      // increment name of file to store next fact as
+//      writeFileNumber++;
+//      delay(500);
+//      updateFactStorageIndex();
+//    }
+//  }
+//
 
 /**
  * Resets fact string for next retrieval and calls storeFact function
@@ -458,13 +502,11 @@ void sampleAcceleration(int samples) {
   }
 }
 
-// this method makes a HTTP GET connection to the server
 bool factRequestSuccessful()
 {
   char server[] = "triviotoy.azurewebsites.net";
-  int userID = 3;                 // which user is using ball
   Serial.println();
-  
+    
   // close any connection before send a new request
   // this will free the socket on the WiFi shield
   client.stop();
@@ -479,12 +521,10 @@ bool factRequestSuccessful()
     client.println(F("Connection: close"));
     client.println();
 
-    //successful connection
     return true;
   }
   else {
     // if you couldn't make a connection
-    Serial.println(F("failed connection"));
     return false;
   }
 }
@@ -499,7 +539,9 @@ void loop() {
   if(!readingFromServer){
     bool factRead = checkAcceleration();
     if(factRead){
-     makeFactRequest();
+     if(factRequestSuccessful()){
+        readingFromServer = true;
+      }
    }
   }
 }
