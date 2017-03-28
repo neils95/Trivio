@@ -110,6 +110,8 @@ void connect_to_wifi() {
         send_confirmation = send_data("no");
       }
     }
+    bool closed = wifi.releaseTCP();
+    Serial.println(closed);
   }
 
 
