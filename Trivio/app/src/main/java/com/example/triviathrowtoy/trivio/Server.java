@@ -118,6 +118,10 @@ public class Server {
                 // Get confirmation connection from toy
                 message = getInputStream(hostThreadSocket);
 
+                while(!message.equals("ok")) {
+                    message = getInputStream(hostThreadSocket);
+                }
+
                 Log.d("SOCKET_SERVER", "received message: " + message);
 
                 if(message.equals("ok")) {
@@ -191,7 +195,7 @@ public class Server {
                             setWait(false);
                         }
                     },
-                    3000
+                    500
             );
 
             while(wait) {

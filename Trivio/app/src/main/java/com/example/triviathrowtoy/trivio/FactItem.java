@@ -30,16 +30,16 @@ public class FactItem implements Parcelable {
     }
 
     private String factString;
-    private long factID;
+    private String factID;
     private String voteStatus = voteStatuses.notVoted.toString();
 
-    public FactItem(String fact, long factId) {
+    public FactItem(String fact, String factId) {
         factString = fact;
         factID = factId;
         voteStatus = voteStatuses.notVoted.toString();
     }
 
-    public FactItem(String fact, voteStatuses status, long factId) {
+    public FactItem(String fact, voteStatuses status, String factId) {
         factString = fact;
         factID = factId;
         voteStatus = status.toString();
@@ -49,7 +49,7 @@ public class FactItem implements Parcelable {
         return factString;
     }
 
-    public long getFactID() {
+    public String getFactID() {
         return factID;
     }
 
@@ -69,14 +69,14 @@ public class FactItem implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(factString);
-        dest.writeLong(factID);
+        dest.writeString(factID);
         dest.writeString(voteStatus);
     }
 
 
     protected FactItem(Parcel in) {
         factString = in.readString();
-        factID = in.readLong();
+        factID = in.readString();
         voteStatus = in.readString();
     }
 

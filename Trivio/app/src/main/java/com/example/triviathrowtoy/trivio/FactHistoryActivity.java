@@ -19,6 +19,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -41,7 +45,8 @@ public class FactHistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_fact_history);
 
         factHistoryList = (ListView)findViewById(R.id.historyListView);
-        getRequestId = SaveSharedPreferences.getUserID(this) + "/history";
+        //getRequestId = SaveSharedPreferences.getUserID(this) + "/history";
+        getRequestId = "History/" + "4";
 
         mProgressView = findViewById(R.id.fact_progress);
         showProgress(true);
@@ -83,7 +88,7 @@ public class FactHistoryActivity extends AppCompatActivity {
 
         if(result != null && !result.isEmpty()) {
             Log.d("GET_REQUEST",result);
-            factHistory.add(new FactItem(result, (long)1));
+            parseJSONResult(result);
         }
 
         if(factHistory.size() != 0) {
@@ -110,6 +115,28 @@ public class FactHistoryActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+    }
+
+    public Boolean parseJSONResult(String jsonString) {
+
+        try {
+            JSONObject jsonResponse = new JSONObject(jsonString);
+
+            JSONArray jsonArray = jsonResponse.getJSONArray("triviaHistory");
+
+            for (int i=0; i<jsonArray.length(); i++) {
+                JSONObject historyObject = jsonArray.getJSONObject(i);
+                JSONObject triviaObject = historyObject.getJSONObject("trivia");
+                String triviaString = triviaObject.getString("text");
+                String triviaId = triviaObject.getString("id");
+                factHistory.add(new FactItem(triviaString, triviaId));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return true;
     }
 
     /**
