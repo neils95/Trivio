@@ -17,15 +17,14 @@ int16_t startingAddress = 4;
 SoftwareSerial Serial1(9, 8); // RX, TX
 #endif
 
-int userID = 3;                 // which user is using ball
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
-char server[] = "triviotoy.azurewebsites.net";
 
 //char factFilename[] = "0";  // filename of next fact to be played
 const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
-String fact = "";
 int NUMBER_OF_FILES = 1;
+bool readingFromServer = false;
+char fact[140];
 
 WiFiEspClient client;
 EMIC2 emic;
@@ -56,12 +55,12 @@ void setup() {
   testConnection();
 //
 //  // initialize serial for ESP module
-//  Serial1.begin(9600);
+  Serial1.begin(9600);
 //  // initialize ESP module
-//  WiFi.init(&Serial1);
+  WiFi.init(&Serial1);
 //
 //  // attempt to connect to WiFi network
-//  connectToNetwork();
+  connectToNetwork();
 
   setupSD();
   // get filename of last stored fact
@@ -71,7 +70,9 @@ void setup() {
 void testConnection() {
   Serial.println(F("Testing device connections..."));
   bool accelConnection = accelgyro.testConnection();
-  Serial.println(accelConnection ? "MPU6050 connection successful" : "MPU6050 connection failed. Retrying.");
+  if(!accelConnection){
+    Serial.println(F("MPU6050 connection failed. Retrying."));
+  }
 
   while (accelConnection == false) { // keep testing connection if failed
     accelConnection = accelgyro.testConnection();
@@ -375,6 +376,7 @@ void getFact() {
  */
 void readInFact(){
   boolean isFact = false;
+  int i = 0;
   while (client.available()) {
     char c = client.read();
     //begin counting characters in string on " character
@@ -382,8 +384,22 @@ void readInFact(){
       isFact = true;
     }
     //write character in to fact string
-    if(isFact == true && c != 34){
-      fact += c;
+    if(isFact == true && c != 34 && i < 138){
+      fact[i] = c;
+      i++;
+    }
+  }
+
+  fact[i] = '\0';
+
+  //formerly resetFact but putting here for now
+  if(i > 20){
+    storeFact(fact);
+    Serial.println(fact);
+    readingFromServer = false;
+
+    for(int i = 0; i < 140; i++) {
+      fact[i] = '\0';
     }
   }
 }
@@ -391,25 +407,28 @@ void readInFact(){
 /**
  * Resets fact string for next retrieval and calls storeFact function
  */
-void resetFact(){
-  if(fact.length() > 20){
+/*void resetFact(){
+  if(sizeof(fact) > 20){
     storeFact(fact);
     Serial.println(fact);
-    fact = "";
+    readingFromServer = false;
+
+    for(int i = 0; i < 140; i++) {
+      fact[i] = '\0';
+    }
   }
-}
+}*/
 
 void makeFactRequest() {
   if(factRequestSuccessful()){ //make request to server for another fact
-      //TODO: Send request with history counter to server
-      //TODO: Reset history counter
+      readingFromServer = true;
     }else{
       //TODO: Increment history counter on toy to send when connection finally made
     }
 }
 
 // Checks difference in acceleration for throw
-void checkAcceleration() {
+bool checkAcceleration() {
   accelgyro.getAcceleration(&ax, &ay, &az);
   //printDebugging(0);
   x_diff = abs(ax - x_prev);
@@ -418,15 +437,17 @@ void checkAcceleration() {
   //printDebugging(1);
   //makeFactRequest();
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
-    Serial.println(F("Throw or shake detected"));
+    Serial.println(F("accel detected"));
     getFact(); // Read fact from EEPROM and plays it
     
     sampleAcceleration(50); // set delay long enough to  for fact to be played
+    return true;
   } else {
     x_prev = ax;
     y_prev = ay;
     z_prev = az;
     delay(500); // delay in acceleration sampling rate
+    return false;
   }
 }
 
@@ -440,20 +461,22 @@ void sampleAcceleration(int samples) {
 // this method makes a HTTP GET connection to the server
 bool factRequestSuccessful()
 {
+  char server[] = "triviotoy.azurewebsites.net";
+  int userID = 3;                 // which user is using ball
   Serial.println();
-    
+  
   // close any connection before send a new request
   // this will free the socket on the WiFi shield
   client.stop();
 
   // if there's a successful connection
   if (client.connect(server, 80)) {
-    Serial.println("Connecting...");
+    Serial.println(F("Connecting..."));
     
     // send the HTTP PUT request
-    client.println("GET /Trivia/" + String(userID) + " HTTP/1.1");
-    client.println("Host: triviotoy.azurewebsites.net");
-    client.println("Connection: close");
+    client.println(F("GET /Trivia/3 HTTP/1.1"));
+    client.println(F("Host: triviotoy.azurewebsites.net"));
+    client.println(F("Connection: close"));
     client.println();
 
     //successful connection
@@ -461,26 +484,32 @@ bool factRequestSuccessful()
   }
   else {
     // if you couldn't make a connection
+    Serial.println(F("failed connection"));
     return false;
   }
 }
 
 void loop() {
   //if there's incoming data over server connection, read in the fact
-  //readInFact();
+  readInFact();
 
   //if fact has been read in -> cache fact and reset string for next retrieval
   //resetFact();
   
-  checkAcceleration();
+  if(!readingFromServer){
+    bool factRead = checkAcceleration();
+    if(factRead){
+     makeFactRequest();
+   }
+  }
 }
 
 // Function serial prints for debuging purposes
-void printDebugging(int function) {
+/*void printDebugging(int function) {
   switch (function) {
     case 0: // Print acceleration
       Serial.print(F("Ax: "));
-      Serial.println(ax);
+      Serial.println(F(ax));
       Serial.print(F("Ay: "));
       Serial.println(ay);
       Serial.print(F("Az: "));
@@ -502,4 +531,4 @@ void printDebugging(int function) {
       break;
   }
   Serial.println();
-}
+}*/

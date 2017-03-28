@@ -201,7 +201,7 @@ void EMIC2::speak(long num)
 }
 
 // Sends a message to the Emic 2 module to speak
-void EMIC2::speak(unsigned long num)
+/*void EMIC2::speak(unsigned long num)
 {
     ready();
 
@@ -214,7 +214,7 @@ void EMIC2::speak(unsigned long num)
     _emic2_io->print('S');
     _emic2_io->print(num);
     _emic2_io->print('\n');
-}
+}*/
 
 // Sends a message to the Emic 2 module to speak
 void EMIC2::speak(double num)
@@ -316,7 +316,7 @@ void EMIC2::speak(String filename, uint8_t sd)
 }
 
 // Plays demonstration messages
-void EMIC2::speakDemo(uint8_t num)
+/*void EMIC2::speakDemo(uint8_t num)
 {
     if ( num >= 0 && num < 3 )
     {
@@ -332,7 +332,7 @@ void EMIC2::speakDemo(uint8_t num)
         Serial.println(num);
         #endif
     }
-}
+}*/
 
 // Sends a command specified entirely on the input argument
 void EMIC2::sendCmd(char *cmd)
@@ -563,7 +563,7 @@ uint16_t EMIC2::getRate()
 }
 
 // Sets speaking language
-void EMIC2::setLanguage(uint8_t language)
+/*void EMIC2::setLanguage(uint8_t language)
 {
     if ( language == 0 || language == 1 || language == 2 )
     {
@@ -638,12 +638,12 @@ void EMIC2::setDefaultSettings()
     #ifdef VERBOSE
     Serial.println("Default settings restored");
     #endif
-}
+}*/
 
 // Prints to the serial port the current settings of the Emic 2 Module
 // The response is bigger than the size of the receive buffer...
 // so it prints the response while it receives the data to make room for them
-void EMIC2::getCurrentSettings()
+/*void EMIC2::getCurrentSettings()
 {
     ready();
 
@@ -669,4 +669,4 @@ void EMIC2::getVInfo()
     while ( _emic2_io->available() ) Serial.print((char)_emic2_io->read());
     Serial.println();
     _emic2_io->flush();
-}
+}*/
