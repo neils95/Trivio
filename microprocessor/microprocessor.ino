@@ -5,10 +5,9 @@
 #include <Wire.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
-//need to add the emic 2 library
 
-#define rxpin 4
-#define txpin 5
+#define rxpin 3
+#define txpin 4
 int16_t startingAddress = 4;
 
 // Emulate Serial1 on pins 6/7 if not present
@@ -37,14 +36,14 @@ int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled
 int32_t threshold = 10000;      // threshold for difference in acceleration
 
 // led
-const int redPin = 16;
-const int greenPin = 15;
-const int bluePin = 14;
+#define redPin 16
+#define greenPin 15
+#define bluePin 14
 
 // buttons
-const int volumeDownButton = 5;
-const int volumeUpButton = 6;
-const int wifiButton = 7;
+#define volumeDownButton 5
+#define volumeUpButton 6
+#define wifiButton 7
 
 int volumeDownButtonState;            // current reading of button
 int lastVolumeDownButtonState = LOW;  // the previous reading from the input pin
@@ -59,10 +58,10 @@ int lastWifiButtonState = LOW;  // the previous reading from the input pin
 long lastWifiDebounceTime = 0;  // the last time button was toggled
 bool wifiSetupMode = false;
 
-long debounceDelay = 50;    // the debounce time, increase if output flickers
+long debounceDelay = 100;    // the debounce time, increase if output flickers
 
 //volume control
-int volume = 10;
+short int volume = 10;
 
 
 void setup() {
@@ -100,6 +99,10 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
+  pinMode(volumeDownButton, INPUT);
+  pinMode(volumeUpButton, INPUT);
+  pinMode(wifiButton, INPUT);
+  setColor(1);
 }
 
 void testConnection() {
@@ -139,8 +142,8 @@ void setupSD() {
  */
 void connectToNetwork()
 {
-  char ssid[] = "DanseyPhone";            // your network SSID (name)
-  char pass[] = "12345679";        // your network password
+  char ssid[] = "Neil";            // your network SSID (name)
+  char pass[] = "0123456789";        // your network password
   if ( status != WL_CONNECTED) {
     Serial.print(F("Attempting to connect to WPA SSID: "));
     Serial.println(ssid);
@@ -151,14 +154,14 @@ void connectToNetwork()
 
 // stores user id
 void setUserId(String id) {
-  char filename = "u.txt";
+  char filename[] = "u.txt";
   File file;
   if(SD.exists(filename)) {
     file = SD.open(filename);
     file.println(id);
     file.close();
   } else { // create file
-    File file = SD.open(filename,"FILE_WRITE");
+    File file = SD.open(filename,FILE_WRITE);
     file.println(id);
     file.close();
   }
@@ -169,7 +172,7 @@ void setUserId(String id) {
 
 // gets user id
 void getUserId() {
-  char filename = "u.txt";
+  char filename[] = "u.txt";
   File file;
   String number = "3";
   // get filename to store fact as
@@ -186,7 +189,7 @@ void getUserId() {
     file.close();
   } else {
     // create file
-    file = SD.open(filename,"FILE_WRITE");
+    file = SD.open(filename,FILE_WRITE);
     file.println(number);
     file.close();
   }
@@ -216,7 +219,7 @@ int getServerPlayCount() {
     file.close();
   } else {
     // create file
-    File file = SD.open(serverCountFile,"FILE_WRITE");
+    File file = SD.open(serverCountFile,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -239,7 +242,7 @@ void updateServerPlayCount() {
       file.close();
     } else {
       // create file
-      File file = SD.open(serverCountFile,"FILE_WRITE");
+      File file = SD.open(serverCountFile,FILE_WRITE);
       file.println("0");
       file.close();
     }
@@ -257,7 +260,7 @@ void resetServerPlayCount() {
     file.close();
   } else {
     // create file
-    File file = SD.open(serverCountFile,"FILE_WRITE");
+    File file = SD.open(serverCountFile,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -285,7 +288,7 @@ String getPlayFilename() {
     }
   } else {
     // create file
-    File file = SD.open(playFilename,"FILE_WRITE");
+    File file = SD.open(playFilename,FILE_WRITE);
     if(file) {
       file.println("0");
       file.close();
@@ -310,7 +313,7 @@ void updatePlayFileName(String factFilename) {
     file.close();
   } else {
     // create file
-    File file = SD.open(playFilename,"FILE_WRITE");
+    File file = SD.open(playFilename,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -328,6 +331,7 @@ String getFactFromFile() {
   factFilename = factFilename + ".txt";
   Serial.print(F("Opening file: "));
   Serial.println(factFilename);
+  factFilename.trim();
 
   // get fact from file
   String factString = "";
@@ -357,16 +361,16 @@ String getFactFromFile() {
  */
 // stores fact
 void storeFact(String factString) {
-  char txt[] = ".txt";
   File file;
-  String filename = String(writeFileNumber) + txt;
+  String filename = String(writeFileNumber);
+  filename = filename + ".txt";
   // create/open file and store fact
   if(SD.exists(filename)) {
     file = SD.open(filename);
     file.println(factString);
     file.close();
   } else {
-    File file = SD.open(filename,"FILE_WRITE");
+    File file = SD.open(filename,FILE_WRITE);
     file.println(factString);
     file.close();
   }
@@ -378,7 +382,7 @@ void storeFact(String factString) {
 
 // gets index of last stored fact
 void getFactStorageIndex() {
-  char writeFilename = "w.txt";
+  char writeFilename[] = "w.txt";
   File file;
   String number = "0";
   // get filename to store fact as
@@ -395,7 +399,7 @@ void getFactStorageIndex() {
     file.close();
   } else {
     // create file
-    File file = SD.open(writeFilename,"FILE_WRITE");
+    File file = SD.open(writeFilename,FILE_WRITE);
     file.println(number);
     file.close();
   }
@@ -408,8 +412,8 @@ void getFactStorageIndex() {
 
 // updates saving index of last stored fact
 void updateFactStorageIndex() {
-  Serial.println(F("Updating Fact Storage Index: "));
-  char writeFilename = "w.txt";
+  Serial.println(F("Update Fact Storage Index: "));
+  char writeFilename[] = "w.txt";
   File file;
   if(SD.exists(writeFilename)) {
     // update fact index of last stored
@@ -425,7 +429,7 @@ void updateFactStorageIndex() {
     }
   } else {
     // create file
-    File file = SD.open(writeFilename,"FILE_WRITE");
+    File file = SD.open(writeFilename,FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -507,12 +511,14 @@ void checkAcceleration() {
     x_prev = ax;
     y_prev = ay;
     z_prev = az;
+    checkButtons();
     delay(500); // delay in acceleration sampling rate
   }
 }
 
 void sampleAcceleration(int samples) {
   for (int i = 0; i < samples; i++) {
+    checkButtons();
     accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
     delay(100);
   }
@@ -547,7 +553,7 @@ bool factRequestSuccessful()
 }
 
 //Write to analog outputs
-void set_color(int setting) {
+void setColor(int setting) {
   int red = 0;
   int green = 0;
   int blue = 0;
@@ -606,7 +612,7 @@ void checkVolumeDownInput() {
       volumeDownButtonState = reading;
 
       // button press was detected with debouncing taken into account
-      if (volumeDownButtonState == LOW) {
+      if (volumeDownButtonState == HIGH) {
         Serial.println(F("V down"));
         if(volume > 0) {
           volume--;
@@ -634,7 +640,7 @@ void checkVolumeUpInput() {
       volumeUpButtonState = reading;
 
       // button press was detected with debouncing taken into account
-      if (volumeUpButtonState == LOW) {
+      if (volumeUpButtonState == HIGH) {
         Serial.println(F("V up"));
         if(volume < 10) {
           volume++;
@@ -662,18 +668,24 @@ void checkWifiButtonInput() {
       wifiButtonState = reading;
 
       // button press was detected with debouncing taken into account
-      if (wifiButtonState == LOW) {
+      if (wifiButtonState == HIGH) {
         Serial.println(F("Wifi setup mode"));
         wifiSetupMode = !wifiSetupMode;
         
         if(wifiSetupMode) {
-          set_color(4);
+          setColor(4);
           //TODO: put function to call wifi setup mode here
         }
       }
     }
   }
   lastWifiButtonState = reading;
+}
+
+void checkButtons() {
+  /*checkVolumeDownInput();
+  checkVolumeUpInput();
+  checkWifiButtonInput();*/
 }
 
 void loop() {
@@ -685,11 +697,9 @@ void loop() {
   
   checkAcceleration();
 
-  checkVolumeDownInput();
-  checkVolumeUpInput();
-  checkWifiButtonInput();
+  checkButtons();
 }
-
+/*
 // Function serial prints for debuging purposes
 void printDebugging(int function) {
   switch (function) {
@@ -717,4 +727,4 @@ void printDebugging(int function) {
       break;
   }
   Serial.println();
-}
+}*/
