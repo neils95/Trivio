@@ -240,24 +240,24 @@ void EMIC2::speak(char *filename, uint8_t sd)
     if ( _sd )  // Checks if the SD card has been initiliazed
     {
         // Creates the file path
-        char path[20] = "/emic2/";
+        char path[20] = "";//"/emic2/";
         strcat(path, filename);
-
-        #ifdef VERBOSE
-        Serial.print("Requesting file: ");
+        
+        //#ifdef VERBOSE
+        Serial.print(F("Requesting file: "));
         Serial.println(path);
-        #endif
+        //#endif
 
         File f = SD.open(path);  // Tries to open the file
         if ( f )
         {
             #ifdef VERBOSE
             Serial.print(path);
-            Serial.println(" found\nFile opended");
+            Serial.println(F(" found\nFile opended"));
             #endif
 
             #ifdef VERBOSE
-            Serial.println("Playing message: ");
+            Serial.println(F("Playing message: "));
             #endif
 
             char c;
@@ -268,9 +268,9 @@ void EMIC2::speak(char *filename, uint8_t sd)
 
                 while ( ( ( c = f.read() ) != '\n' ) && ( c != -1 ) )
                 {
-                    #ifdef VERBOSE
+                    //#ifdef VERBOSE
                     Serial.print(c);
-                    #endif
+                    //#endif
 
                     _emic2_io->print(c);  // Sends characters one by one
                 }

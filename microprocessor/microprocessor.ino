@@ -2,7 +2,7 @@
 #include <SD.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include <Wire.h>
+//#include <Wire.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
 //need to add the emic 2 library
@@ -24,6 +24,7 @@ const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
 int NUMBER_OF_FILES = 1;
 bool readingFromServer = false;
+short numPlayed = 0;
 //char fact[140];
 
 WiFiEspClient client;
@@ -34,15 +35,16 @@ int16_t ax, ay, az;             // current acceleration values
 int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
 int32_t threshold = 10000;      // threshold for difference in acceleration
-
+int factCount = 1;
 void setup() {
   Serial.begin(9600);
-  Wire.begin();
+  //Wire.begin();
   
 
+  //setupSD();
   // initialize emic devices
   Serial.println(F("Intializing emic device..."));
-  emic.begin(rxpin, txpin);
+  emic.begin(rxpin, txpin, 10);
   emic.setVoice(8); // sets the voice, there are 9 types, 0 - 8
   emic.setVolume(10); // sets the volume, 10 is max 
   
@@ -62,9 +64,10 @@ void setup() {
 //  // attempt to connect to WiFi network
   connectToNetwork();
 
-  setupSD();
   // get filename of last stored fact
   getFactStorageIndex();
+
+  numPlayed = getServerPlayCount();
 }
 
 void testConnection() {
@@ -155,6 +158,7 @@ void updateServerPlayCount() {
   
     String numString = "";
     if(SD.exists(serverCountFile)) {
+      SD.remove(serverCountFile);
       // write file
       File file = SD.open(serverCountFile);
       file.println(String(number));
@@ -173,6 +177,7 @@ void updateServerPlayCount() {
 void resetServerPlayCount() {
   char serverCountFile[] = "s.txt";
   if(SD.exists(serverCountFile)) {
+    SD.remove(serverCountFile);
     // read/write from file
     File file = SD.open(serverCountFile);
     file.println("0");
@@ -199,7 +204,7 @@ String getPlayFilename() {
       while(file.available()) {
         char ltr = file.read();
         if(ltr != '\n') {
-          factFilename += ltr;
+          factFilename = factFilename + ltr;
         }
       }
       Serial.println(factFilename);
@@ -214,6 +219,7 @@ String getPlayFilename() {
       Serial.println(F("DNE. File created."));
     }
   }
+  factFilename.trim();
   delay(500);
   return factFilename;
 }
@@ -221,23 +227,32 @@ String getPlayFilename() {
 // writes to file what fact to play next time
 void updatePlayFileName(String factFilename) {
   // increment and store fact index to be played next time
+  factFilename.trim();
   int number = factFilename.toInt();
   number++;
   factFilename = String(number);
+  factFilename.trim();
+  String numberName = factFilename;
+  numberName = numberName + ".txt";
+  numberName.trim();
   char playFilename[] = "p.txt";
   if(SD.exists(playFilename)) {
+    if(!SD.exists(numberName)) {
+      factFilename = "0";
+    }
+    SD.remove(playFilename);
     // read/write from file
-    File file = SD.open(playFilename);
+    File file = SD.open(playFilename,FILE_WRITE);
     file.println(factFilename);
     file.close();
+    Serial.print(F("Updating fact Index: "));
+    Serial.println(number);
   } else {
     // create file
     File file = SD.open(playFilename,FILE_WRITE);
     file.println("0");
     file.close();
   }
-  Serial.print(F("Updating fact Index: "));
-  Serial.println(number);
   delay(500);
 }
 
@@ -265,8 +280,6 @@ String getFactFromFile() {
     }
     file.close();
     delay(500);
-    // increment and store fact index to be played next time
-    updatePlayFileName(factFilename);
   } else {
     factString = "No fact available.";
   }
@@ -278,23 +291,25 @@ String getFactFromFile() {
  * Call this function when storing fact from server
  */
 // stores fact
-void storeFact(String factString) {
-  char txt[] = ".txt";
+void storeFact(String factString, int fileNum) {
   File file;
-  String filename = String(writeFileNumber) + txt;
+  String filename = String(fileNum);
+  filename = filename + ".txt";
   // create/open file and store fact
   if(SD.exists(filename)) {
-    file = SD.open(filename);
-    file.println(factString);
-    file.close();
-  } else {
-    File file = SD.open(filename,FILE_WRITE);
+    SD.remove(filename);
+  }
+  
+  Serial.println(F("Storing Fact: "));
+  file = SD.open(filename,FILE_WRITE);
+  if(file) {
+    Serial.println(factString);
     file.println(factString);
     file.close();
   }
 
   // increment name of file to store next fact as
-  writeFileNumber++;
+  //writeFileNumber++;
   delay(500);
 }
 
@@ -305,6 +320,7 @@ void getFactStorageIndex() {
   String number = "0";
   // get filename to store fact as
   if(SD.exists(writeFilename)) {
+    SD.remove(writeFilename);
     number = "";
     // read/write from file
     file = SD.open(writeFilename);
@@ -334,8 +350,10 @@ void updateFactStorageIndex() {
   char writeFilename[] = "w.txt";
   File file;
   if(SD.exists(writeFilename)) {
+    SD.remove(writeFilename);
+    
     // update fact index of last stored
-    file = SD.open(writeFilename);
+    file = SD.open(writeFilename,FILE_WRITE);
     if(file) {
       // if max reached, go back to 0
       if(writeFileNumber > MAXFILENUM) {
@@ -357,11 +375,18 @@ void updateFactStorageIndex() {
 }
 
 // plays fact on TTS module
-void playFact(String fact) {
-  Serial.print(F("Fact: "));
-  Serial.println(fact);
-  emic.speak(fact);
-  updateServerPlayCount();
+void playFact(String factFile) {
+  factFile.trim();
+  String filename = factFile;
+  filename = filename + ".txt";
+  filename.trim();
+  Serial.print(F("Fact filename: "));
+  Serial.println(filename);
+  emic.speak(filename,10);
+  int num = factFile.toInt();
+  //updateServerPlayCount(num);
+  // increment and store fact index to be played next time
+  updatePlayFileName(factFile);
 }
 
 /**
@@ -369,9 +394,10 @@ void playFact(String fact) {
  */
 // get fact when shake or throw is detected
 void getFact() {
-  String fact = getFactFromFile();
+  String factFile = getPlayFilename();
+  factFile.trim();
   delay(100);
-  playFact(fact);
+  playFact(factFile);
 }
 
 //char fact[140];
@@ -383,6 +409,7 @@ void getFact() {
 void readInFact(){
   boolean isFact = false;
   int i = 0;
+  String fact = "";
   while (client.available()) {
     char c = client.read();
     //begin counting characters in string on " character
@@ -392,76 +419,25 @@ void readInFact(){
     //write character in to fact string
     if(isFact == true && c != 34){
       Serial.write(c);
-      //fact[i] = c;
+      fact = fact + c;
       i++;
     }
   }
   
   //if fact was pulled in, i will be greater than 1. 
   //Store end character and flip reading from server to false
-  if(i > 20){
-    //storeFact(fact);
-    Serial.write('\0');
-    Serial.write('\n');
+  if(fact.length() > 20){
+    Serial.println(fact);
+    storeFact(fact, factCount);
+    factCount++;
+    //Serial.write('\0');
+    //Serial.write('\n');
     readingFromServer = false;
+    client.stop();
+  } else {
+    delay(500);
   }
 }
-
-//  if(client.available()) {
-//
-//    getFactStorageIndex();
-//    if(client.available()) {
-//    
-//      File file;
-//      String filename = String(writeFileNumber);
-//      filename = filename + ".txt";
-//      // create/open file and store fact
-//      if(SD.exists(filename)) {
-//        file = SD.open(filename);
-//        Serial.println(F("File opened.."));
-//      } else {
-//        file = SD.open(filename,FILE_WRITE);
-//        Serial.println(F("File created.."));
-//      }
-//    
-//      while (client.available()) {
-//            char c = client.read();
-//            //begin counting characters in string on " character
-//            if(c == 34){
-//              isFact = true;
-//            }
-//            //write character in to fact string
-//            if(isFact == true && c != 34 && i < 138){
-//              //file.print(c);
-//            }
-//          }
-//          
-//        file.print('\0');
-//    
-//      file.close();
-//    
-//      // increment name of file to store next fact as
-//      writeFileNumber++;
-//      delay(500);
-//      updateFactStorageIndex();
-//    }
-//  }
-//
-
-/**
- * Resets fact string for next retrieval and calls storeFact function
- */
-/*void resetFact(){
-  if(sizeof(fact) > 20){
-    storeFact(fact);
-    Serial.println(fact);
-    readingFromServer = false;
-
-    for(int i = 0; i < 140; i++) {
-      fact[i] = '\0';
-    }
-  }
-}*/
 
 void makeFactRequest() {
   if(factRequestSuccessful()){ //make request to server for another fact
@@ -510,7 +486,7 @@ bool factRequestSuccessful()
   // close any connection before send a new request
   // this will free the socket on the WiFi shield
   client.stop();
-
+  Serial.println(F("about to try to connect"));
   // if there's a successful connection
   if (client.connect(server, 80)) {
     Serial.println(F("Connecting..."));
@@ -535,15 +511,25 @@ void loop() {
 
   //if fact has been read in -> cache fact and reset string for next retrieval
   //resetFact();
-  
-  if(!readingFromServer){
-    bool factRead = checkAcceleration();
-    if(factRead){
-     if(factRequestSuccessful()){
-        readingFromServer = true;
+
+//  if(factCount < 50 && status == WL_CONNECTED) {
+//    makeFactRequest();
+//  }
+//  
+
+  checkAcceleration();
+  /*if(!readingFromServer){
+    if(numPlayed <= 0){
+      bool factRead = checkAcceleration();
+      if(factRead){
+       updateServerPlayCount();
+       makeFactRequest();
       }
-   }
-  }
+    }else{
+      makeFactRequest();
+      numPlayed--;
+    }
+  }*/
 }
 
 // Function serial prints for debuging purposes
