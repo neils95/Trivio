@@ -2,11 +2,9 @@
 #include <SD.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-//#include <Wire.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
 #include "ESP8266.h"
-//need to add the emic 2 library
 
 #define rxpin 3
 #define txpin 4
@@ -20,7 +18,6 @@ SoftwareSerial Serial1(9, 8); // RX, TX
 
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 
-//char factFilename[] = "0";  // filename of next fact to be played
 const int MAXFILENUM = 2000;  // maximum number of files for facts
 int writeFileNumber = 0;  // filename of next fact to be stored
 int NUMBER_OF_FILES = 1;
@@ -72,7 +69,6 @@ short int volume = 10;
 void setup() {
   Serial.begin(9600);
   //Wire.begin();
-  
 
   //setupSD();
   // initialize emic devices
@@ -80,7 +76,6 @@ void setup() {
   emic.begin(rxpin, txpin, 10);
   emic.setVoice(8); // sets the voice, there are 9 types, 0 - 8
   emic.setVolume(10); // sets the volume, 10 is max 
-  
   
   // initialize device
   Serial.println(F("Initializing I2C devices..."));
@@ -706,6 +701,16 @@ void checkButtons() {
   checkVolumeDownInput();
   checkVolumeUpInput();
   checkWifiButtonInput();
+}
+
+void tcpMode() {
+  //Attempt tcp connection
+  bool tcp_created = create_TCP_connection();
+
+  if(tcp_created) {
+    //function to carry out the connection to the wifi
+    connect_to_wifi();
+  }
 }
 
 bool create_TCP_connection() {
