@@ -5,6 +5,7 @@
 //#include <Wire.h>
 #include "EMIC2.h"
 #include "WiFiEsp.h"
+#include "ESP8266.h"
 //need to add the emic 2 library
 
 #define rxpin 3
@@ -25,7 +26,10 @@ int writeFileNumber = 0;  // filename of next fact to be stored
 int NUMBER_OF_FILES = 1;
 bool readingFromServer = false;
 short numPlayed = 0;
-//char fact[140];
+
+ESP8266 wifi(Serial1);
+String ssid;
+String pass;
 
 WiFiEspClient client;
 EMIC2 emic;
@@ -36,6 +40,35 @@ int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
 int32_t threshold = 10000;      // threshold for difference in acceleration
 int factCount = 1;
+
+// led
+#define redPin 16
+#define greenPin 15
+#define bluePin 14
+
+// buttons
+#define volumeDownButton 5
+#define volumeUpButton 6
+#define wifiButton 7
+
+int volumeDownButtonState;            // current reading of button
+int lastVolumeDownButtonState = LOW;  // the previous reading from the input pin
+long lastVolumeDownDebounceTime = 0;  // the last time button was toggled
+
+int volumeUpButtonState;              // current reading of button
+int lastVolumeUpButtonState = LOW;    // the previous reading from the input pin
+long lastVolumeUpDebounceTime = 0;    // the last time button was toggled
+
+int wifiButtonState;            // current reading of button
+int lastWifiButtonState = LOW;  // the previous reading from the input pin
+long lastWifiDebounceTime = 0;  // the last time button was toggled
+bool wifiSetupMode = false;
+
+long debounceDelay = 100;    // the debounce time, increase if output flickers
+
+//volume control
+short int volume = 10;
+
 void setup() {
   Serial.begin(9600);
   //Wire.begin();
@@ -64,10 +97,43 @@ void setup() {
 //  // attempt to connect to WiFi network
   connectToNetwork();
 
+  //espSetup();
+
   // get filename of last stored fact
   getFactStorageIndex();
 
   numPlayed = getServerPlayCount();
+  hardwareSetup();
+}
+
+void hardwareSetup() {
+  // set LED outputs
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(volumeDownButton, INPUT);
+  pinMode(volumeUpButton, INPUT);
+  pinMode(wifiButton, INPUT);
+  setColor(1);
+}
+
+void espSetup() {
+  //sets the baud rate between the esp and arduino
+  Serial.println(F("Starting wifi setup"));
+  bool baud = wifi.autoSetBaud();
+  
+  //setting the mode (mode 3) of the esp to operate in both AP and Station mode
+  bool mode = wifi.setOprToStationSoftAP();
+
+  //If mode is correctly set, create the esp's wifi network
+  if(mode) {
+    wifi.setSoftAPParam("myESP", "1234", 3, 0);
+    Serial.print(F("Set AP: "));
+    Serial.println(F("complete"));
+  }
+
+  //Making the esp in single mode so that there is only one connection at a time
+  bool mux_disabled = wifi.disableMUX();
 }
 
 void testConnection() {
@@ -502,6 +568,259 @@ bool factRequestSuccessful()
   else {
     // if you couldn't make a connection
     return false;
+  }
+}
+
+//Write to analog outputs
+void setColor(int setting) {
+  int red = 0;
+  int green = 0;
+  int blue = 0;
+
+  switch(setting) {
+    case 0: { // red - low battery
+      red = 255;
+      break;
+    }
+    case 1: { // green - connected to wifi
+      green = 255;
+      break;
+    }
+    case 2: { // purple - not connected to wifi
+      red = 255;
+      blue = 255;
+      break;
+    }
+    case 3: { // blue - updating from server
+      blue = 255;
+      break;
+    }
+    case 4: { // white - wifi connect mode
+      red = 255;
+      blue = 255;
+      green = 255;
+      break;
+    }
+    default: { // off
+      break;
+    }
+  }
+  
+  uint8_t redIn = 255 - uint8_t(red);
+  uint8_t greenIn = 255 - uint8_t(green);
+  uint8_t blueIn = 255 - uint8_t(blue);
+
+  analogWrite(redPin, redIn);
+  analogWrite(greenPin, greenIn);
+  analogWrite(bluePin, blueIn);
+}
+
+// detects input of volume button with debouncing
+void checkVolumeDownInput() {
+  int reading = digitalRead(volumeDownButton);  // current reading of button, debouncing
+
+  // switch changed due to noise or pressing
+  if (reading != lastVolumeDownButtonState) {
+    lastVolumeDownDebounceTime = millis();      // reset the debouncing timer
+  }
+
+  // delay time for debouncing has been reached
+  if ((millis() - lastVolumeDownDebounceTime) > debounceDelay) {
+
+    if (reading != volumeDownButtonState) {     // button state changed
+      volumeDownButtonState = reading;
+
+      // button press was detected with debouncing taken into account
+      if (volumeDownButtonState == HIGH) {
+        Serial.println(F("V down"));
+        if(volume > 0) {
+          volume--;
+        }
+        emic.setVolume(volume);
+      }
+    }
+  }
+  lastVolumeDownButtonState = reading;
+}
+
+// detects input of volume button with debouncing
+void checkVolumeUpInput() {
+  int reading = digitalRead(volumeUpButton);  // current reading of button, debouncing
+
+  // switch changed due to noise or pressing
+  if (reading != lastVolumeUpButtonState) {
+    lastVolumeUpDebounceTime = millis();      // reset the debouncing timer
+  }
+
+  // delay time for debouncing has been reached
+  if ((millis() - lastVolumeUpDebounceTime) > debounceDelay) {
+
+    if (reading != volumeUpButtonState) {     // button state changed
+      volumeUpButtonState = reading;
+
+      // button press was detected with debouncing taken into account
+      if (volumeUpButtonState == HIGH) {
+        Serial.println(F("V up"));
+        if(volume < 10) {
+          volume++;
+        }
+        emic.setVolume(volume);
+      }
+    }
+  }
+  lastVolumeUpButtonState = reading;
+}
+
+// detects input of volume button with debouncing
+void checkWifiButtonInput() {
+  int reading = digitalRead(wifiButton);  // current reading of button, debouncing
+
+  // switch changed due to noise or pressing
+  if (reading != lastWifiButtonState) {
+    lastWifiDebounceTime = millis();      // reset the debouncing timer
+  }
+
+  // delay time for debouncing has been reached
+  if ((millis() - lastWifiDebounceTime) > (debounceDelay * 5)) {
+
+    if (reading != wifiButtonState) {     // button state changed
+      wifiButtonState = reading;
+
+      // button press was detected with debouncing taken into account
+      if (wifiButtonState == HIGH) {
+        Serial.println(F("Wifi setup mode"));
+        wifiSetupMode = !wifiSetupMode;
+        
+        if(wifiSetupMode) {
+          setColor(4);
+          //TODO: put function to call wifi setup mode here
+          tcpMode();
+        }
+      }
+    }
+  }
+  lastWifiButtonState = reading;
+}
+
+void checkButtons() {
+  checkVolumeDownInput();
+  checkVolumeUpInput();
+  checkWifiButtonInput();
+}
+
+bool create_TCP_connection() {
+  //creating a TCP connection to the phone
+  while(create_TCP() == false) {
+    Serial.println("Couldn't create");
+    create_TCP();
+  }
+  String ack = receive_data();
+  while(ack.length() < 0) {
+    ack = receive_data();
+  }
+  
+  if(ack == "ok") {
+//    Serial.println("Ack received");
+    //sending ack back
+    bool sent = send_data("ok");
+    while(sent == false) {
+//      Serial.println("Trying to send ack");
+      sent = send_data("ok");
+    }
+//    Serial.println("Ack Sent");
+    return sent;
+  }
+}
+
+void connect_to_wifi() {
+    bool send_confirmation;
+    bool send_failure;  
+    //Waiting for wifi credentials
+    String cred = receive_data();
+    while(cred.length() < 0) {
+      cred = receive_data();
+    }
+    //separating the credentials
+    bool break_cred = break_credentials(cred);
+    //Trying to connect to the wifi
+    Serial.println(F("Connecting to the wifi..."));
+    bool connect_wifi = wifi.joinAP(ssid, pass);
+    if(connect_wifi == true) {
+      send_confirmation = send_data("yes");
+      while(send_confirmation == false) {
+        send_confirmation = send_data("yes");
+      }
+    }
+    else {
+      send_failure = send_data("no");
+      while(send_failure == false) {
+        send_failure = send_data("no");
+      }
+    }
+    bool closed = wifi.releaseTCP();
+    Serial.println(closed);
+}
+
+//breaking the credentials received from the phone in the format "ssid:pass"
+bool break_credentials(String data) {
+  if(data.length() > 0) {
+    int colon_first = data.indexOf(':');
+    String userid = data.substring(0, colon_first);
+    String creds = data.substring(colon_first + 1);
+    int colon_second = creds.indexOf(':');
+    ssid = creds.substring(0, colon_second);
+    pass = creds.substring(colon_second + 1);
+    return true;
+  }
+  return false;
+}
+
+//Breaking the IP of device connected as it is given as "ip,mac-address" 
+String break_ip(String ip) {
+  int comma_index = ip.indexOf(',');
+  String actual_ip = "";
+  if(ip.length() > 0) {
+      actual_ip = ip.substring(0, comma_index);
+      return actual_ip;
+    }
+  return "";
+}
+
+//create a tcp connection with the phone
+bool create_TCP() {
+  bool tcp_created;
+  String ip_device = wifi.getJoinedDeviceIP();
+  ip_device = break_ip(ip_device);
+  Serial.println(ip_device);
+  if(ip_device.length() > 0) {
+    tcp_created = wifi.createTCP(ip_device, 8080);
+  }
+  return tcp_created;
+}
+
+//Used to send data to the phone and if succesful will return true
+bool send_data(String data) {
+  int len = data.length();
+  byte *buff = new byte[len];
+  for(int i = 0; i < len; i++) {
+    buff[i] = data[i];
+  }
+  bool sent = wifi.send(buff, len);
+  return sent;
+}
+
+//Used to receive data from the phone
+String receive_data() {
+  uint8_t buff[128] = {0};
+  uint32_t len = wifi.recv(buff, sizeof(buff), 120000);
+  String data = "";
+  
+  if(len > 0) {
+    for(int i = 0; i < len; i++) {
+      data += char(buff[i]);
+    }
+    data[len] = '\0';
+    return data;
   }
 }
 
