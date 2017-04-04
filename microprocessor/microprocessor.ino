@@ -63,6 +63,8 @@ int lastWifiButtonState = LOW;  // the previous reading from the input pin
 long lastWifiDebounceTime = 0;  // the last time button was toggled
 bool wifiSetupMode = false;
 
+bool playingFact = false;
+
 void setup() {
   Serial.begin(9600);
   hardwareSetup();
@@ -396,6 +398,7 @@ void playFact(String factFile) {
  * Call this function when throw is detected
  */
 void getFact() {
+  playingFact = true;
   String factFile = getPlayFilename();
   factFile.trim();
   delay(100);
@@ -434,6 +437,7 @@ void readInFact(){
   } else {
     delay(500);
   }
+  playingFact = false;
 }
 
 void makeFactRequest() {
@@ -443,6 +447,7 @@ void makeFactRequest() {
       updateServerPlayCount();
     }
     Serial.println(F("Not connected to wifi"));
+    playingFact = false;
     return;
   }
 
@@ -463,7 +468,6 @@ bool checkAcceleration() {
   y_diff = abs(ay - y_prev);
   z_diff = abs(az - z_prev);
   //printDebugging(1);
-  //makeFactRequest();
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println(F("accel detected"));
     getFact(); // Read fact from EEPROM and plays it
@@ -621,7 +625,6 @@ void checkVolumeUpInput() {
         if(volume < 10) {
           volume++;
         }
-        //emic.setVolume(volume);
         emic += 10;
       }
     }
@@ -848,5 +851,7 @@ void loop() {
   checkButtons();
   //setLedWifiStatus();
 
-  checkAcceleration();
+  if(!playingFact) {
+    checkAcceleration();
+  }
 }
