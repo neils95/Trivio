@@ -63,7 +63,7 @@ int lastWifiButtonState = LOW;  // the previous reading from the input pin
 long lastWifiDebounceTime = 0;  // the last time button was toggled
 bool wifiSetupMode = false;
 
-bool playingFact = false;
+bool enableAcceleration = true;
 
 void setup() {
   Serial.begin(9600);
@@ -398,7 +398,7 @@ void playFact(String factFile) {
  * Call this function when throw is detected
  */
 void getFact() {
-  playingFact = true;
+  enableAcceleration = false;
   String factFile = getPlayFilename();
   factFile.trim();
   delay(100);
@@ -426,7 +426,9 @@ void readInFact(){
       i++;
     }
   }
-  
+
+  enableAcceleration = true;
+ 
   //if fact was pulled in, i will be greater than 1. 
   //Store end character and flip reading from server to false
   if(fact.length() > 20){
@@ -437,7 +439,6 @@ void readInFact(){
   } else {
     delay(500);
   }
-  playingFact = false;
 }
 
 void makeFactRequest() {
@@ -447,7 +448,7 @@ void makeFactRequest() {
       updateServerPlayCount();
     }
     Serial.println(F("Not connected to wifi"));
-    playingFact = false;
+    enableAcceleration = false;
     return;
   }
 
@@ -463,11 +464,9 @@ void makeFactRequest() {
 // Checks difference in acceleration for throw
 bool checkAcceleration() {
   accelgyro.getAcceleration(&ax, &ay, &az);
-  //printDebugging(0);
   x_diff = abs(ax - x_prev);
   y_diff = abs(ay - y_prev);
   z_diff = abs(az - z_prev);
-  //printDebugging(1);
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println(F("accel detected"));
     getFact(); // Read fact from EEPROM and plays it
@@ -851,7 +850,7 @@ void loop() {
   checkButtons();
   //setLedWifiStatus();
 
-  if(!playingFact) {
+  if(enableAcceleration) {
     checkAcceleration();
   }
 }
