@@ -15,12 +15,10 @@ int16_t startingAddress = 4;
 #include "SoftwareSerial.h"
 #endif
 
-int status = WL_IDLE_STATUS;    // the Wifi radio's status
 
 const int MAXFILENUM = 2000;    // maximum number of files for facts
 int writeFileNumber = 0;        // filename of next fact to be stored
 int serverCount = 0;            // number of distinct facts played since last server request
-bool readingFromServer = false;
 
 #define sdPin 53
 #define HOST_NAME   "triviotoy.azurewebsites.net"
@@ -39,7 +37,7 @@ String ssid;
 String pass;
 String userID;
 String fact = "";
-
+bool connectedToNetwork = false;
 // led
 #define redPin 3
 #define greenPin 4
@@ -85,8 +83,7 @@ void setup() {
   testConnection();     // verify connection
   
   Serial1.begin(9600);  // initialize serial for ESP module
-  //WiFi.init(&Serial1);  // initialize ESP module
-  //connectToNetwork();   // attempt to connect to WiFi network
+  connectToNetwork();   // attempt to connect to WiFi network
 
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount();
@@ -128,11 +125,13 @@ void connectToNetwork(){
 
     if (wifi.joinAP(ssid, pass)) {
         Serial.print("Join AP success\r\n");
-
         Serial.print("IP:");
-        Serial.println( wifi.getLocalIP().c_str());       
+        Serial.println( wifi.getLocalIP().c_str());
+
+        connectedToNetwork = true;
     } else {
         Serial.print("Join AP failure\r\n");
+        connectedToNetwork = false;
     }
     
     if (wifi.disableMUX()) {
@@ -185,7 +184,7 @@ void espSetup() {
 }
 
 void setLedWifiStatus() {
-  if(WiFi.status() == WL_CONNECTED) {
+  if(connectedToNetwork) {
     setColor(1);
    } else {
     setColor(2);
@@ -204,15 +203,7 @@ void hardwareSetup() {
   setColor(5);
 }
 
-/**
- * Attempts to connect to WiFi if not already connnected
- * status global variable holds WiFi status 
- */
 
-
-/*
- * Call this function to get number to return to server for how many facts has been played
- */
 /*
  * Call this function to get number to return to server for how many facts has been played
  */
@@ -439,7 +430,7 @@ bool checkAcceleration() {
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println(F("accel detected"));
     getFact(); // Read fact from EEPROM and plays it
-    getFactFromServer();
+    getFactFromServer(); //Pull new fact in from server
     sampleAcceleration(50); // set delay long enough to  for fact to be played
     return true;
   } else {
@@ -471,8 +462,11 @@ void getFactFromServer(){
    bool isFact = false;
 
     if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
+        connectedToNetwork = true;
+        setLedWifiStatus();
         Serial.print("create tcp ok\r\n");
     } else {
+        connectedToNetwork = false;
         setLedWifiStatus();
         Serial.print("create tcp err\r\n");
     }
@@ -506,19 +500,23 @@ void getFactFromServer(){
 }
 
 
-void storeHistoryOnServer(){
+void store1CountOnServer(){
    uint8_t buffer[1024] = {0};
    bool isFact = false;
 
     if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
         Serial.print("create tcp ok\r\n");
+        connectedToNetwork = true;
+        setLedWifiStatus();
     } else {
         Serial.print("create tcp err\r\n");
+        connectedToNetwork = false;
+        setLedWifiStatus();
     }
 
     
     char putRequest[100];
-    sprintf(putRequest,"PUT /User/History/%i/%i HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: close\r\n\r\n", userID.toInt(), serverCount);
+    sprintf(putRequest,"PUT /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: close\r\n\r\n", userID.toInt());
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
 
     if (wifi.releaseTCP()) {
@@ -764,6 +762,7 @@ void connect_to_wifi() {
     bool connect_wifi = wifi.joinAP(ssid, pass);
     if(connect_wifi == true) {
       Serial.println(F("Success!!!"));
+      connectedToNetwork = true;
       send_confirmation = send_data("yes");
       while(send_confirmation == false) {
         Serial.println(F("Trying to send success"));
@@ -772,6 +771,7 @@ void connect_to_wifi() {
     }
     else {
       Serial.println(F("Failed :("));
+      connectedToNetwork = false;
       send_failure = send_data("no");
       while(send_failure == false) {
         Serial.println(F("Trying to send failure"));
@@ -908,9 +908,13 @@ void loop() {
 
   checkButtons();
   //setLedWifiStatus();
-  checkAcceleration();
+  if(enableAcceleration){
+    checkAcceleration();
+  }
 
-  if(serverCount > 0){
-    storeHistoryOnServer();
+  //connected to network but toy and server not synced, run http requests until synced with each other
+  if(serverCount > 0 && connectedToNetwork){
+    getFactFromServer();
+    store1CountOnServer();
   }
 }
