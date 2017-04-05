@@ -3,8 +3,9 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 #include "EMIC2.h"
-#include "WiFiEsp.h"
+//#include "WiFiEsp.h"
 #include "ESP8266.h"
+#include <WiFi.h>
 
 #define rxpin 10
 #define txpin 11
@@ -24,7 +25,7 @@ int serverCount = 0;            // number of distinct facts played since last se
 bool readingFromServer = false;
 
 #define sdPin 53
-WiFiEspClient client;
+//WiFiEspClient client;
 EMIC2 emic;
 MPU6050 accelgyro;
 int16_t ax, ay, az;             // current acceleration values
@@ -73,8 +74,9 @@ void setup() {
   // initialize emic devices
   Serial.println(F("Intializing emic device..."));
   emic.begin(rxpin, txpin, sdPin);
-  emic.setVoice(8);   // sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(48); // sets the volume, 10 is max 
+  emic.setVoice(0);   // sets the voice, there are 9 types, 0 - 8
+  emic.setVolume(0); // sets the volume
+  emic.setRate(150);
   
   // initialize accelerometer
   Serial.println(F("Initializing I2C devices..."));
@@ -82,15 +84,14 @@ void setup() {
   testConnection();     // verify connection
   
   Serial1.begin(9600);  // initialize serial for ESP module
-  WiFi.init(&Serial1);  // initialize ESP module
+  //WiFi.init(&Serial1);  // initialize ESP module
   //connectToNetwork();   // attempt to connect to WiFi network
 
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount();
 
   setLedWifiStatus();
-
-  emic.speak("HELLLOOO");
+  emic.speak("Hello.");
 }
 
 void testConnection() {
@@ -134,19 +135,16 @@ void espSetup() {
   //Serial.println(baud);
 
   //setting the mode (mode 3) of the esp to operate in both AP and Station mode
-//  bool mode = wifi.setOprToStationSoftAP();
+  bool mode = wifi.setOprToStationSoftAP();
   Serial.print(F("Mode: "));
-//  Serial.println(mode);
+  Serial.println(mode);
 
-  int apMode = WiFi.beginAP("myESP", 3, "1234", ENC_TYPE_WPA2_PSK, false);
-  Serial.println(apMode);
-
-  //If mode is correctly set, create the esp's wifi network
-//  if(mode) {
-//    wifi.setSoftAPParam("myESP", "1234", 3, 0);
-//    Serial.print(F("Set AP: "));
-//    Serial.println(F("complete"));
-//  }
+  // If mode is correctly set, create the esp's wifi network
+  if(mode) {
+    wifi.setSoftAPParam("myESP", "1234", 3, 0);
+    Serial.print(F("Set AP: "));
+    Serial.println(F("complete"));
+  }
 
   //Making the esp in single mode so that there is only one connection at a time
   bool mux_disabled = wifi.disableMUX(); 
@@ -411,62 +409,6 @@ void getFact() {
   playFact(factFile);
 }
 
-/**
- * //Detects if server is sending over bits of fact string data
- * //and reads into a String
- */
-void readInFact(){
-  boolean isFact = false;
-  int i = 0;
-  String fact = "";
-  while (client.available()) {
-    char c = client.read();
-    //begin counting characters in string on " character
-    if(c == 34){
-      isFact = true;
-    }
-    //write character in to fact string
-    if(isFact == true && c != 34){
-      Serial.write(c);
-      fact = fact + c;
-      i++;
-    }
-  }
-
-  enableAcceleration = true;
- 
-  //if fact was pulled in, i will be greater than 1. 
-  //Store end character and flip reading from server to false
-  if(fact.length() > 20){
-    Serial.println(fact);
-    storeFact(fact);
-    readingFromServer = false;
-    client.stop();
-  } else {
-    delay(500);
-  }
-}
-
-void makeFactRequest() {
-  if(WiFi.status() != WL_CONNECTED) {
-    if(serverCount < MAXFILENUM) {
-      serverCount++;
-      updateServerPlayCount();
-    }
-    Serial.println(F("Not connected to wifi"));
-    enableAcceleration = false;
-    return;
-  }
-
-  setColor(3);
-  
-  if(factRequestSuccessful()){ //make request to server for another fact
-    readingFromServer = true;
-  }else{
-    //TODO: Increment history counter on toy to send when connection finally made
-  }
-}
-
 // Checks difference in acceleration for throw
 bool checkAcceleration() {
   accelgyro.getAcceleration(&ax, &ay, &az);
@@ -497,32 +439,93 @@ void sampleAcceleration(int samples) {
   }
 }
 
+/**
+ * //Detects if server is sending over bits of fact string data
+ * //and reads into a String
+ */
+void readInFact(){
+//  boolean isFact = false;
+//  int i = 0;
+//  String fact = "";
+//  while (client.available()) {
+//    char c = client.read();
+//    //begin counting characters in string on " character
+//    if(c == 34){
+//      isFact = true;
+//    }
+//    //write character in to fact string
+//    if(isFact == true && c != 34){
+//      Serial.write(c);
+//      fact = fact + c;
+//      i++;
+//    }
+//  }
+//
+//  enableAcceleration = true;
+// 
+//  //if fact was pulled in, i will be greater than 1. 
+//  //Store end character and flip reading from server to false
+//  if(fact.length() > 20){
+//    Serial.println(fact);
+//    storeFact(fact);
+//    readingFromServer = false;
+//    client.stop();
+//  } else {
+//    delay(500);
+//  }
+}
+
+void makeFactRequest() {
+  if(WiFi.status() != WL_CONNECTED) {
+    if(serverCount < MAXFILENUM) {
+      serverCount++;
+      updateServerPlayCount();
+    }
+    Serial.println(F("Not connected to wifi"));
+    enableAcceleration = false;
+    return;
+  }
+
+  setColor(3);
+  
+  if(factRequestSuccessful()){ //make request to server for another fact
+    readingFromServer = true;
+  }else{
+    //TODO: Increment history counter on toy to send when connection finally made
+  }
+}
+
+/**
+ * REPLACE WITH NEW REQUEST CODE
+ */
 bool factRequestSuccessful()
 {
-  char server[] = "triviotoy.azurewebsites.net";
-  Serial.println();
-    
-  // close any connection before send a new request
-  // this will free the socket on the WiFi shield
-  client.stop();
-  Serial.println(F("about to try to connect"));
-  // if there's a successful connection
-  if (client.connect(server, 80)) {
-    Serial.println(F("Connecting..."));
-    
-    // send the HTTP PUT request
-    client.println(F("GET /Trivia/3 HTTP/1.1"));
-    client.println(F("Host: triviotoy.azurewebsites.net"));
-    client.println(F("Connection: close"));
-    client.println();
-
-    return true;
-  }
-  else {
-    // if you couldn't make a connection
-    setLedWifiStatus();
-    return false;
-  }
+//  char server[] = "triviotoy.azurewebsites.net";
+//  Serial.println();
+//    
+//  // close any connection before send a new request
+//  // this will free the socket on the WiFi shield
+//  client.stop();
+//  Serial.println(F("about to try to connect"));
+//  // if there's a successful connection
+//  if (client.connect(server, 80)) {
+//    Serial.println(F("Connecting..."));
+//    
+//    // send the HTTP PUT request
+//    client.println(F("GET /Trivia/3 HTTP/1.1"));
+//    client.println(F("Host: triviotoy.azurewebsites.net"));
+//    client.println(F("Connection: close"));
+//    client.println();
+//
+//    return true;
+//  }
+//  else {
+//    // if you couldn't make a connection
+//    setLedWifiStatus();
+//    return false;
+//  }
+  setLedWifiStatus();
+  return false;
 }
 
 
