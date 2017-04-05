@@ -83,7 +83,7 @@ void setup() {
   
   Serial1.begin(9600);  // initialize serial for ESP module
   WiFi.init(&Serial1);  // initialize ESP module
-  connectToNetwork();   // attempt to connect to WiFi network
+  //connectToNetwork();   // attempt to connect to WiFi network
 
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount();
@@ -126,28 +126,34 @@ void setupSD() {
   Serial.println(F("initialization done."));
 }
 
-
 void espSetup() {
   //sets the baud rate between the esp and arduino
   Serial.println(F("Starting wifi setup"));
-  bool baud = wifi.autoSetBaud();
-  
+  //bool baud = wifi.autoSetBaud();
+  Serial.print(F("Baud set: "));
+  //Serial.println(baud);
+
   //setting the mode (mode 3) of the esp to operate in both AP and Station mode
-  bool mode = wifi.setOprToStationSoftAP();
+//  bool mode = wifi.setOprToStationSoftAP();
+  Serial.print(F("Mode: "));
+//  Serial.println(mode);
+
+  int apMode = WiFi.beginAP("myESP", 3, "1234", ENC_TYPE_WPA2_PSK, false);
+  Serial.println(apMode);
 
   //If mode is correctly set, create the esp's wifi network
-  if(mode) {
-    wifi.setSoftAPParam("myESP", "1234", 3, 0);
-    Serial.print(F("Set AP: "));
-    Serial.println(F("complete"));
-  }
+//  if(mode) {
+//    wifi.setSoftAPParam("myESP", "1234", 3, 0);
+//    Serial.print(F("Set AP: "));
+//    Serial.println(F("complete"));
+//  }
 
   //Making the esp in single mode so that there is only one connection at a time
-  bool mux_disabled = wifi.disableMUX();
+  bool mux_disabled = wifi.disableMUX(); 
 }
 
 void setLedWifiStatus() {
-  if(status == WL_CONNECTED) {
+  if(WiFi.status() == WL_CONNECTED) {
     setColor(1);
    } else {
     setColor(2);
@@ -176,7 +182,7 @@ void connectToNetwork()
 //  char pass[] = "12345679";        // your network password
   char ssid[] = "Christine";            // your network SSID (name)
   char pass[] = "0123456789";
-  if ( status != WL_CONNECTED) {
+  if ( WiFi.status() != WL_CONNECTED) {
     Serial.print(F("Attempting to connect to WPA SSID: "));
     Serial.println(ssid);
     // Connect to WPA/WPA2 network
@@ -442,7 +448,7 @@ void readInFact(){
 }
 
 void makeFactRequest() {
-  if(status != WL_CONNECTED) {
+  if(WiFi.status() != WL_CONNECTED) {
     if(serverCount < MAXFILENUM) {
       serverCount++;
       updateServerPlayCount();
@@ -514,6 +520,7 @@ bool factRequestSuccessful()
   }
   else {
     // if you couldn't make a connection
+    setLedWifiStatus();
     return false;
   }
 }
@@ -648,7 +655,7 @@ void checkWifiButtonInput() {
 
       // button press was detected with debouncing taken into account
       if (wifiButtonState == 1) {
-        wifiSetupMode = !wifiSetupMode;
+        wifiSetupMode = true;
         
         if(wifiSetupMode) {
           Serial.println(F("Wifi setup mode"));
@@ -669,6 +676,7 @@ void checkButtons() {
 }
 
 void tcpMode() {
+  espSetup();
   //Attempt tcp connection
   bool tcp_created = create_TCP_connection();
 
@@ -678,75 +686,116 @@ void tcpMode() {
   }
 
   // end of tcp mode?
+  wifiSetupMode = false;
   setLedWifiStatus();
 }
 
+bool disconnect_wifi() {
+  //Disconnect from the wifi for now as I already connected it to our wifi once
+  //so it always automatically connects, but we dont want that
+  bool disconnected = wifi.leaveAP();
+  Serial.print(F("Disconnected: "));
+  Serial.println(disconnected);
+  return disconnected;
+}
+
+void restartTCPConnection() {
+  Serial.print(F("Restarting tcp connection: "));
+  bool cl = wifi.releaseTCP();
+  Serial.println(cl);
+  create_TCP_connection();
+}
+
 bool create_TCP_connection() {
-  String ok = "ok";
   //creating a TCP connection to the phone
-  while(create_TCP() == false) {
+  Serial.println(F("Trying to create a TCP connection"));
+  bool tcpCreated = create_TCP();
+  while(tcpCreated == false) {
     Serial.println(F("Couldn't create"));
-    create_TCP();
-  }
-  String ack = receive_data();
-  while(ack.length() < 0) {
-    ack = receive_data();
+    tcpCreated = create_TCP();
   }
   
-  if(ack == ok) {
-    Serial.println("Ack received");
+  Serial.println(F("TCP connection initiated"));
+  String ack = receive_data(2000);
+
+  Serial.print(F("Data received: "));
+  Serial.println(ack);
+
+  if(ack.length() <= 0) {
+    Serial.println(F("waiting for ack"));
+    restartTCPConnection();
+    return false;
+  }
+  
+  if(ack == "ok") {
+    Serial.println(F("Ack received"));
     //sending ack back
-    bool sent = send_data(ok);
+    bool sent = send_data("ok");
     while(sent == false) {
       Serial.println(F("Trying to send ack"));
-      sent = send_data(ok);
+      sent = send_data("ok");
     }
     Serial.println(F("Ack Sent"));
     return sent;
+  } 
+  else {
+    restartTCPConnection();
+    return false;
   }
 }
 
 void connect_to_wifi() {
     bool send_confirmation;
     bool send_failure;  
-    String yes = "yes";
-    String no = "no";
     //Waiting for wifi credentials
-    String cred = receive_data();
-    while(cred.length() < 0) {
-      cred = receive_data();
-    }
+    Serial.println(F("Credentials"));
+    String cred = receive_data(120000);
+    Serial.println(F("Credentials received"));
+
     //separating the credentials
     bool break_cred = break_credentials(cred);
+    Serial.print(F("Cred separated: "));
+    Serial.println(break_cred);
+  
     //Trying to connect to the wifi
     Serial.println(F("Connecting to the wifi..."));
     bool connect_wifi = wifi.joinAP(ssid, pass);
     if(connect_wifi == true) {
-      send_confirmation = send_data(yes);
+      Serial.println(F("Success!!!"));
+      send_confirmation = send_data("yes");
       while(send_confirmation == false) {
-        send_confirmation = send_data(yes);
+        Serial.println(F("Trying to send success"));
+        send_confirmation = send_data("yes");
       }
     }
     else {
-      send_failure = send_data(no);
+      Serial.println(F("Failed :("));
+      send_failure = send_data("no");
       while(send_failure == false) {
-        send_failure = send_data(no);
+        Serial.println(F("Trying to send failure"));
+        send_failure = send_data("no");
       }
     }
     bool closed = wifi.releaseTCP();
     Serial.println(closed);
-}
+  }
+
 
 //breaking the credentials received from the phone in the format "ssid:pass"
 bool break_credentials(String data) {
   if(data.length() > 0) {
-    int colon_first = data.indexOf(':');
-    userID = data.substring(0, colon_first);
-    String creds = data.substring(colon_first + 1);
-    int colon_second = creds.indexOf(':');
-    ssid = creds.substring(0, colon_second);
-    pass = creds.substring(colon_second + 1);
-    setUserId(userID);
+    int colon_index = data.indexOf(':');
+    String userid = data.substring(0, colon_index);
+    String rest = data.substring(colon_index + 1);
+    int second_colon = rest.indexOf(':'); 
+    ssid = rest.substring(0, second_colon);
+    pass = rest.substring(second_colon + 1);
+    Serial.print(F("userid: "));
+    Serial.println(userid);
+    Serial.print(F("ssid: "));
+    Serial.println(ssid);
+    Serial.print(F("pass: "));
+    Serial.println(pass);
     return true;
   }
   return false;
@@ -754,10 +803,11 @@ bool break_credentials(String data) {
 
 //Breaking the IP of device connected as it is given as "ip,mac-address" 
 String break_ip(String ip) {
-  int comma_index = ip.indexOf(',');
   String actual_ip = "";
   if(ip.length() > 0) {
+      int comma_index = ip.indexOf(',');
       actual_ip = ip.substring(0, comma_index);
+      Serial.println(actual_ip);
       return actual_ip;
     }
   return "";
@@ -768,6 +818,7 @@ bool create_TCP() {
   bool tcp_created;
   String ip_device = wifi.getJoinedDeviceIP();
   ip_device = break_ip(ip_device);
+  Serial.print("Ip: ");
   Serial.println(ip_device);
   if(ip_device.length() > 0) {
     tcp_created = wifi.createTCP(ip_device, 8080);
@@ -783,22 +834,29 @@ bool send_data(String data) {
     buff[i] = data[i];
   }
   bool sent = wifi.send(buff, len);
+  Serial.print(F("Data sending: "));
+  Serial.println(data);
+  for(int i = 0; i < len; i++) {
+    Serial.println(buff[i]);
+  }
   return sent;
 }
 
 //Used to receive data from the phone
-String receive_data() {
+String receive_data(uint16_t timeout) {
   uint8_t buff[128] = {0};
-  uint32_t len = wifi.recv(buff, sizeof(buff), 120000);
+  uint32_t len = wifi.recv(buff, sizeof(buff), timeout);
   String data = "";
-  
+
   if(len > 0) {
+    Serial.println(F("Incoming: "));
     for(int i = 0; i < len; i++) {
       data += char(buff[i]);
     }
     data[len] = '\0';
-    return data;
+    Serial.print(data);
   }
+  return data;
 }
 
 // stores user id
