@@ -33,8 +33,8 @@ int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled
 int32_t threshold = 10000;      // threshold for difference in acceleration
 
 ESP8266 wifi(Serial1);
-String ssid;
-String pass;
+String ssid = "Christine";
+String pass = "0123456789";
 String userID;
 String fact = "";
 bool connectedToNetwork = false;
@@ -83,13 +83,16 @@ void setup() {
   testConnection();     // verify connection
   
   Serial1.begin(9600);  // initialize serial for ESP module
-  connectToNetwork();   // attempt to connect to WiFi network
+  //connectToNetwork();   // attempt to connect to WiFi network
 
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount();
 
+  Serial.print(F("Turning AP mode off: "));
+  Serial.println(wifi.setOprToStation());
+
   setLedWifiStatus();
-  emic.speak("Hello.");
+  //emic.speak("Hello.");
 }
 
 void testConnection() {
@@ -109,82 +112,63 @@ void testConnection() {
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
 }
 
-
-
 void connectToNetwork(){
-  Serial.print("setup begin\r\n");
+  Serial.println(F("Begin wifi setup"));
 
-    Serial.print("FW Version:");
-    Serial.println(wifi.getVersion().c_str());
+//    Serial.print("FW Version:");
+//    Serial.println(wifi.getVersion().c_str());
 
     if (wifi.setOprToStationSoftAP()) {
-        Serial.print("to station + softap ok\r\n");
+        Serial.print(F("to station + softap ok\r\n"));
     } else {
-        Serial.print("to station + softap err\r\n");
+        Serial.print(F("to station + softap err\r\n"));
     }
 
     if (wifi.joinAP(ssid, pass)) {
-        Serial.print("Join AP success\r\n");
-        Serial.print("IP:");
-        Serial.println( wifi.getLocalIP().c_str());
-
-        connectedToNetwork = true;
+        Serial.print(F("Join AP success\r\n"));
     } else {
-        Serial.print("Join AP failure\r\n");
-        connectedToNetwork = false;
+        Serial.print(F("Join AP failure\r\n"));
     }
     
     if (wifi.disableMUX()) {
-        Serial.print("single ok\r\n");
+        Serial.print(F("single ok\r\n"));
     } else {
-        Serial.print("single err\r\n");
+        Serial.print(F("single err\r\n"));
     }
     
-    Serial.print("setup end\r\n");
+    Serial.print(F("setup end\r\n"));
 }
 
+//void setupSD() {
+//  
+//  while (!Serial) {
+//    ; // wait for serial port to connect. Needed for native USB port only
+//  }
+//  pinMode(sdPin, OUTPUT);
+//  
+//  Serial.print(F("Initializing SD card..."));
+//
+//  if (!SD.begin(10)) {
+//    Serial.println(F("initialization failed!"));
+//    return;
+//  }
+//  Serial.println(F("initialization done."));
+//}
 
-void setupSD() {
-  
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-  pinMode(sdPin, OUTPUT);
-  
-  Serial.print(F("Initializing SD card..."));
-
-  if (!SD.begin(10)) {
-    Serial.println(F("initialization failed!"));
-    return;
-  }
-  Serial.println(F("initialization done."));
-}
-
-void espSetup() {
-  //sets the baud rate between the esp and arduino
-  Serial.println(F("Starting wifi setup"));
-  //bool baud = wifi.autoSetBaud();
-  Serial.print(F("Baud set: "));
-  //Serial.println(baud);
-
-  //setting the mode (mode 3) of the esp to operate in both AP and Station mode
-  bool mode = wifi.setOprToStationSoftAP();
-  Serial.print(F("Mode: "));
-  Serial.println(mode);
-
-  // If mode is correctly set, create the esp's wifi network
-  if(mode) {
-    wifi.setSoftAPParam("myESP", "1234", 3, 0);
-    Serial.print(F("Set AP: "));
-    Serial.println(F("complete"));
-  }
-
-  //Making the esp in single mode so that there is only one connection at a time
-  bool mux_disabled = wifi.disableMUX(); 
+bool isConnected() {
+  String ipStatus = wifi.getIPStatus();
+  Serial.print("IP status: ");
+  Serial.println(ipStatus);
+  ipStatus.trim();
+  if(ipStatus == "STATUS:2" || ipStatus == "STATUS:3") {
+    return true;
+   } else {
+    return false;
+   }
 }
 
 void setLedWifiStatus() {
-  if(connectedToNetwork) {
+  if(isConnected()) {
     setColor(1);
    } else {
     setColor(2);
@@ -690,6 +674,29 @@ void tcpMode() {
   setLedWifiStatus();
 }
 
+void espSetup() {
+  //sets the baud rate between the esp and arduino
+  Serial.println(F("Starting wifi setup"));
+  //bool baud = wifi.autoSetBaud();
+  Serial.print(F("Baud set: "));
+  //Serial.println(baud);
+
+  //setting the mode (mode 3) of the esp to operate in both AP and Station mode
+  bool mode = wifi.setOprToStationSoftAP();
+  Serial.print(F("Mode: "));
+  Serial.println(mode);
+
+  // If mode is correctly set, create the esp's wifi network
+  if(mode) {
+    wifi.setSoftAPParam("myESP", "1234", 3, 0);
+    Serial.print(F("Set AP: "));
+    Serial.println(F("complete"));
+  }
+
+  //Making the esp in single mode so that there is only one connection at a time
+  bool mux_disabled = wifi.disableMUX(); 
+}
+
 bool disconnect_wifi() {
   //Disconnect from the wifi for now as I already connected it to our wifi once
   //so it always automatically connects, but we dont want that
@@ -762,24 +769,41 @@ void connect_to_wifi() {
     bool connect_wifi = wifi.joinAP(ssid, pass);
     if(connect_wifi == true) {
       Serial.println(F("Success!!!"));
-      connectedToNetwork = true;
       send_confirmation = send_data("yes");
+      int count = 0;
       while(send_confirmation == false) {
         Serial.println(F("Trying to send success"));
         send_confirmation = send_data("yes");
+        count++;
+        if(count == 5) {
+          Serial.println(F("Timeout."));
+          break;
+        }
       }
     }
     else {
       Serial.println(F("Failed :("));
-      connectedToNetwork = false;
       send_failure = send_data("no");
+      int count = 0;
       while(send_failure == false) {
         Serial.println(F("Trying to send failure"));
         send_failure = send_data("no");
+        count++;
+        if(count == 5) {
+          Serial.println(F("Timeout."));
+          break;
+        }
       }
     }
+    Serial.print(F("Turning AP mode off: "));
+    Serial.println(wifi.setOprToStation());
     bool closed = wifi.releaseTCP();
     Serial.println(closed);
+
+    if(connect_wifi) {
+      connectToNetwork();
+    }
+    setLedWifiStatus();
   }
 
 
@@ -907,13 +931,13 @@ void loop() {
   //if there's incoming data over server connection, read in the fact
 
   checkButtons();
-  //setLedWifiStatus();
   if(enableAcceleration){
     checkAcceleration();
+    setLedWifiStatus();
   }
 
   //connected to network but toy and server not synced, run http requests until synced with each other
-  if(serverCount > 0 && connectedToNetwork){
+  if(serverCount > 0 && isConnected()){
     getFactFromServer();
     store1CountOnServer();
   }
