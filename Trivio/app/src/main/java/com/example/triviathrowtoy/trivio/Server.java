@@ -133,18 +133,27 @@ public class Server {
                         }
                     });
 
-//                    boolean sendCredentials = true;
+                    boolean sendCredentials = true;
                     // Waiting on sending credentials
                     while(pendingCredentials) {
                         if(send) {
-//                            if(sendCredentials) {
+                            if(sendCredentials) {
                                 // Send credentials
                                 Log.d("SOCKET_STREAM", "sending credentials.");
                                 String msgReply = userID + ":" + SSID + ":" + password;
                                 printStream.print(msgReply);
                                 printStream.flush();
-//                                sendCredentials = false;
-//                            }
+                                sendCredentials = false;
+
+                                activity.runOnUiThread(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        pendingCredentials = false;
+                                        activity.setSuccess(true);
+                                    }
+                                });
+                            }
 //
 //                            message = getInputStream(hostThreadSocket);
 //                            Log.d("WIFI_CONNECTION_RESULT", message);
@@ -169,8 +178,8 @@ public class Server {
 //                                });
 //                            }
 
-                            pendingCredentials = false;
-                            activity.setSuccess(true);
+//                            pendingCredentials = false;
+//                            activity.setSuccess(true);
                         }
                     }
                 }

@@ -17,6 +17,7 @@
     <string name="waiting_connection">Waiting for connection…</string>
     <string name="connect_instructions">First, go to the phone wifi menu and connect to the Trivia WiFi network.</string>
     <string name="Next">Next</string>
+    <string name="enter_credentials">Enter in password if required.</string>
     <string name="connect">Connect</string>
     <string name="disconnected">Disconnected from Trivio WiFi</string>
     <string name="unable_to_connect">Error. Unable to Connect.</string>
