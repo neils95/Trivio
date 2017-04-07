@@ -65,6 +65,8 @@ bool wifiSetupMode = false;
 
 bool enableAcceleration = true;
 
+int lastSetting = 5;
+
 void setup() {
   Serial.begin(9600);
   hardwareSetup();
@@ -113,7 +115,7 @@ void testConnection() {
 }
 
 void connectToNetwork(){
-  Serial.println(F("Begin wifi setup"));
+  Serial.println(F("Begin wifi connect."));
 
 //    Serial.print("FW Version:");
 //    Serial.println(wifi.getVersion().c_str());
@@ -157,8 +159,8 @@ void connectToNetwork(){
 
 bool isConnected() {
   String ipStatus = wifi.getIPStatus();
-  Serial.print("IP status: ");
-  Serial.println(ipStatus);
+//  Serial.print("IP status: ");
+//  Serial.println(ipStatus);
   ipStatus.trim();
   if(ipStatus == "STATUS:2" || ipStatus == "STATUS:3") {
     return true;
@@ -229,6 +231,9 @@ void updateServerPlayCount() {
   File file = SD.open(serverCountFile,FILE_WRITE);
   file.print(numString);
   file.close();
+
+  Serial.print(F("Updated # of facts since last server pull: "));
+  Serial.println(numString);
   
   delay(500);
 }
@@ -414,7 +419,12 @@ bool checkAcceleration() {
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println(F("accel detected"));
     getFact(); // Read fact from EEPROM and plays it
-    getFactFromServer(); //Pull new fact in from server
+    if(isConnected()) {
+      getFactFromServer(); //Pull new fact in from server
+    } else {
+      serverCount++;
+      updateServerPlayCount();
+    }
     sampleAcceleration(50); // set delay long enough to  for fact to be played
     return true;
   } else {
@@ -436,8 +446,6 @@ void sampleAcceleration(int samples) {
 }
 
 
-
-
 /**
  * REPLACE WITH NEW REQUEST CODE
  */
@@ -447,11 +455,9 @@ void getFactFromServer(){
 
     if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
         connectedToNetwork = true;
-        setLedWifiStatus();
         Serial.print("create tcp ok\r\n");
     } else {
         connectedToNetwork = false;
-        setLedWifiStatus();
         Serial.print("create tcp err\r\n");
     }
 
@@ -512,6 +518,10 @@ void store1CountOnServer(){
 
 //Write to analog outputs
 void setColor(int setting) {
+  if(setting == lastSetting) {
+    return;
+  }
+  
   uint8_t red = 0;
   uint8_t green = 0;
   uint8_t blue = 0;
@@ -564,6 +574,8 @@ void setColor(int setting) {
   analogWrite(redPin, red);
   analogWrite(greenPin, green);
   analogWrite(bluePin, blue);
+
+  lastSetting = setting;
 }
 
 // detects input of volume button with debouncing
@@ -766,43 +778,41 @@ void connect_to_wifi() {
   
     //Trying to connect to the wifi
     Serial.println(F("Connecting to the wifi..."));
-    bool connect_wifi = wifi.joinAP(ssid, pass);
-    if(connect_wifi == true) {
-      Serial.println(F("Success!!!"));
-      send_confirmation = send_data("yes");
-      int count = 0;
-      while(send_confirmation == false) {
-        Serial.println(F("Trying to send success"));
-        send_confirmation = send_data("yes");
-        count++;
-        if(count == 5) {
-          Serial.println(F("Timeout."));
-          break;
-        }
-      }
-    }
-    else {
-      Serial.println(F("Failed :("));
-      send_failure = send_data("no");
-      int count = 0;
-      while(send_failure == false) {
-        Serial.println(F("Trying to send failure"));
-        send_failure = send_data("no");
-        count++;
-        if(count == 5) {
-          Serial.println(F("Timeout."));
-          break;
-        }
-      }
-    }
+//    bool connect_wifi = wifi.joinAP(ssid, pass);
+//    if(connect_wifi == true) {
+//      Serial.println(F("Success!!!"));
+//      send_confirmation = send_data("yes");
+//      int count = 0;
+//      while(send_confirmation == false) {
+//        Serial.println(F("Trying to send success"));
+//        send_confirmation = send_data("yes");
+//        count++;
+//        if(count == 5) {
+//          Serial.println(F("Timeout."));
+//          break;
+//        }
+//      }
+//    }
+//    else {
+//      Serial.println(F("Failed :("));
+//      send_failure = send_data("no");
+//      int count = 0;
+//      while(send_failure == false) {
+//        Serial.println(F("Trying to send failure"));
+//        send_failure = send_data("no");
+//        count++;
+//        if(count == 5) {
+//          Serial.println(F("Timeout."));
+//          break;
+//        }
+//      }
+//    }
     Serial.print(F("Turning AP mode off: "));
     Serial.println(wifi.setOprToStation());
     bool closed = wifi.releaseTCP();
     Serial.println(closed);
 
-    if(connect_wifi) {
-      connectToNetwork();
-    }
+    connectToNetwork();
     setLedWifiStatus();
   }
 
