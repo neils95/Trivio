@@ -21,6 +21,7 @@
     <string name="disconnected">Disconnected from Trivio WiFi</string>
     <string name="unable_to_connect">Error. Unable to Connect.</string>
     <string name="successful_connect">Successfully connected Trivio to WiFi.</string>
+    <string name="sent_credentials">Sent credentials to toy. Check LED status of toy to see if successfully connected.</string>
 
     <!-- Strings related to History page -->
     <string name="fact_history">Fact History</string>

@@ -57,6 +57,8 @@ public class ManageWifiActivity extends AppCompatActivity {
 
         userID = SaveSharedPreferences.getUserID(this);
 
+        getIntent().setAction("Already created");getIntent().setAction("Already created");
+
         setCheckPhoneConnection();
     }
 
@@ -102,7 +104,6 @@ public class ManageWifiActivity extends AppCompatActivity {
         EditText mPasswordView;
         mPasswordView = (EditText) findViewById(R.id.wifiPassword);
         String password = mPasswordView.getText().toString();
-        //password = "pen15LMN";
         server.sendCredentials(userID,selectedWifi.SSID,password);
     }
 
@@ -125,7 +126,8 @@ public class ManageWifiActivity extends AppCompatActivity {
         successActivity.setVisibility(View.VISIBLE);
         TextView statusText = (TextView)findViewById(R.id.connectStatus);
         if(success) {
-            statusText.setText(R.string.successful_connect);
+            //statusText.setText(R.string.successful_connect);
+            statusText.setText(R.string.sent_credentials);
         }
     }
 
@@ -140,18 +142,33 @@ public class ManageWifiActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+//        String action = getIntent().getAction();
+//        // Prevent endless loop by adding a unique action, don't restart if action is present
+//        if(action == null || !action.equals("Already created")) {
+//            if(server != null) {
+//                server.closeSocket();
+//            }
+//            Intent intent = new Intent(this, ManageWifiActivity.class);
+//            startActivity(intent);
+//            finish();
+//        }
+//        // Remove the unique action so the next time onResume is called it will restart
+//        else
+//            getIntent().setAction(null);
+
         super.onResume();
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-//        if(server != null) {
-//            server.onDestroy();
-//        }
+        if(server != null) {
+            server.closeSocket();
+        }
 //        if(wifiReceiver != null) {
 //            unregisterReceiver(wifiReceiver);
 //        }
+        super.onDestroy();
     }
 
     /** Called when the user clicks the connectWifi button */

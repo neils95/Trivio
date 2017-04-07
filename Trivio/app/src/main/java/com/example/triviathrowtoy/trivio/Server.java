@@ -32,28 +32,28 @@ public class Server {
     private String password = "";
     private Boolean send = false;
     private Boolean pendingCredentials = true;
+    private Boolean openSocket = true;
 
     public Server(ManageWifiActivity activity) {
         this.activity = activity;
         Thread socketServerThread = new Thread(new SocketServerThread());
         socketServerThread.start();
+        openSocket = true;
     }
 
-    public int getPort() {
-        return socketServerPORT;
-    }
+    public void closeSocket() {
+        openSocket = false;
 
-//    public void onDestroy() {
-//        if (serverSocket != null) {
-//            try {
-//                serverSocket.close();
-//                Log.d("SERVER_SOCKET", "closed socket.");
-//            } catch (IOException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
-//        }
-//    }
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+                Log.d("SERVER_SOCKET", "closed socket.");
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
 
     public void sendCredentials(String userid, String ssid, String pw) {
         userID = userid;
@@ -74,7 +74,7 @@ public class Server {
 
                 Log.d("SOCKET_SERVER", "opened port.");
 
-                while (true) {
+                while (openSocket) {
                     // block the call until connection is created and return
                     // Socket object
                     Socket socket = serverSocket.accept();
@@ -105,7 +105,6 @@ public class Server {
         @Override
         public void run() {
 
-
             // send confirmation of socket connection
             String confirmation = "ok";
             try {
@@ -134,41 +133,44 @@ public class Server {
                         }
                     });
 
-                    boolean sendCredentials = true;
+//                    boolean sendCredentials = true;
                     // Waiting on sending credentials
                     while(pendingCredentials) {
                         if(send) {
-                            if(sendCredentials) {
+//                            if(sendCredentials) {
                                 // Send credentials
                                 Log.d("SOCKET_STREAM", "sending credentials.");
                                 String msgReply = userID + ":" + SSID + ":" + password;
                                 printStream.print(msgReply);
                                 printStream.flush();
-                                sendCredentials = false;
-                            }
+//                                sendCredentials = false;
+//                            }
+//
+//                            message = getInputStream(hostThreadSocket);
+//                            Log.d("WIFI_CONNECTION_RESULT", message);
+//
+//                            if(message.equals("yes")) {
+//                                activity.runOnUiThread(new Runnable() {
+//
+//                                    @Override
+//                                    public void run() {
+//                                        pendingCredentials = false;
+//                                        activity.setSuccess(true);
+//                                    }
+//                                });
+//                            } else if(message.equals("no")){
+//                                activity.runOnUiThread(new Runnable() {
+//
+//                                    @Override
+//                                    public void run() {
+//                                        pendingCredentials = false;
+//                                        activity.setSuccess(false);
+//                                    }
+//                                });
+//                            }
 
-                            message = getInputStream(hostThreadSocket);
-                            Log.d("WIFI_CONNECTION_RESULT", message);
-
-                            if(message.equals("yes")) {
-                                activity.runOnUiThread(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        pendingCredentials = false;
-                                        activity.setSuccess(true);
-                                    }
-                                });
-                            } else if(message.equals("no")){
-                                activity.runOnUiThread(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        pendingCredentials = false;
-                                        activity.setSuccess(false);
-                                    }
-                                });
-                            }
+                            pendingCredentials = false;
+                            activity.setSuccess(true);
                         }
                     }
                 }
