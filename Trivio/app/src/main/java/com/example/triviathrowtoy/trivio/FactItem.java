@@ -10,9 +10,9 @@ import android.os.Parcelable;
 public class FactItem implements Parcelable {
 
     public enum voteStatuses {
-        notVoted("NOT_VOTED"),
-        upVote("UPVOTE"),
-        downVote("DOWNVOTE");
+        notVoted("0"),
+        upVote("1"),
+        downVote("-1");
 
         private final String status;
 
@@ -39,10 +39,10 @@ public class FactItem implements Parcelable {
         voteStatus = voteStatuses.notVoted.toString();
     }
 
-    public FactItem(String fact, voteStatuses status, String factId) {
+    public FactItem(String fact, String status, String factId) {
         factString = fact;
         factID = factId;
-        voteStatus = status.toString();
+        voteStatus = status;
     }
 
     public String getFactString() {

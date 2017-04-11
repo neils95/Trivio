@@ -6,10 +6,15 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class ViewFactActivity extends AppCompatActivity {
 
     private String FACT_PARCEL = "PARCELABLE_FACT";
+    private String userId;
     private FactItem factItem;
+    private static String PutRequestUrl = "http://triviotoy.azurewebsites.net/trivia/vote";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,6 +23,9 @@ public class ViewFactActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
         factItem = bundle.getParcelable(FACT_PARCEL);
+
+        //userId = SaveSharedPreferences.getUserID(this);
+        userId = "4";
 
         if(factItem!= null) {
             TextView factTextView = (TextView)findViewById(R.id.factText);
@@ -50,6 +58,8 @@ public class ViewFactActivity extends AppCompatActivity {
                 factItem.setVoteStatus(FactItem.voteStatuses.downVote);
                 upVoteButton.setImageResource(R.drawable.ic_action_thumbs_up);
                 downVoteButton.setImageResource(R.drawable.ic_action_thumbs_down_light);
+                buildJsonString();
+                putRequest();
             }
         });
 
@@ -59,7 +69,36 @@ public class ViewFactActivity extends AppCompatActivity {
                 factItem.setVoteStatus(FactItem.voteStatuses.upVote);
                 upVoteButton.setImageResource(R.drawable.ic_action_thumbs_up_light);
                 downVoteButton.setImageResource(R.drawable.ic_action_thumbs_down);
+                putRequest();
             }
         });
+    }
+
+    private String buildJsonString() {
+        String jsonString;
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.accumulate("triviaId", Double.parseDouble(factItem.getFactID()));
+            jsonObject.accumulate("userId", Double.parseDouble(userId));
+            jsonObject.accumulate("voteType", Double.parseDouble(factItem.getVoteStatus()));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        jsonString = jsonObject.toString();
+
+        return jsonString;
+    }
+
+    private void putRequest() {
+        String jsonString = buildJsonString();
+        HttpPutRequest putRequest = new HttpPutRequest();
+        try {
+            String result = putRequest.execute(PutRequestUrl, jsonString).get();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 }

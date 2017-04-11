@@ -129,7 +129,8 @@ public class FactHistoryActivity extends AppCompatActivity {
                 JSONObject triviaObject = historyObject.getJSONObject("trivia");
                 String triviaString = triviaObject.getString("text");
                 String triviaId = triviaObject.getString("id");
-                factHistory.add(new FactItem(triviaString, triviaId));
+                String triviaVote = historyObject.getString("userVote");
+                factHistory.add(new FactItem(triviaString, triviaVote, triviaId));
             }
 
         } catch (JSONException e) {
