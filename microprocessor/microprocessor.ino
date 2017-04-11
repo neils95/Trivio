@@ -33,11 +33,10 @@ int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled
 int32_t threshold = 10000;      // threshold for difference in acceleration
 
 ESP8266 wifi(Serial1);
-String ssid = "Christine";
+String ssid = "Urvashi";
 String pass = "0123456789";
 String userID;
-String fact = "";
-bool connectedToNetwork = false;
+//bool connectedToNetwork = false;
 // led
 #define redPin 3
 #define greenPin 4
@@ -65,11 +64,12 @@ bool wifiSetupMode = false;
 
 bool enableAcceleration = true;
 
-int lastSetting = 5;
+int lastSetting = 10;
 
 void setup() {
   Serial.begin(9600);
   hardwareSetup();
+  setColor(5);
 
   //setupSD();
   // initialize emic devices
@@ -78,20 +78,23 @@ void setup() {
   emic.setVoice(0);   // sets the voice, there are 9 types, 0 - 8
   emic.setVolume(0); // sets the volume
   emic.setRate(150);
-  
+
   // initialize accelerometer
   Serial.println(F("Initializing I2C devices..."));
   accelgyro.initialize();
   testConnection();     // verify connection
-  
+
   Serial1.begin(9600);  // initialize serial for ESP module
   //connectToNetwork();   // attempt to connect to WiFi network
+  setupWifiConnection();
 
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount();
 
-  Serial.print(F("Turning AP mode off: "));
-  Serial.println(wifi.setOprToStation());
+//  Serial.print(F("Turning AP mode off: "));
+//  Serial.println(wifi.setOprToStation());
+
+  getUserId();  // get user id stored
 
   setLedWifiStatus();
   //emic.speak("Hello.");
@@ -100,7 +103,7 @@ void setup() {
 void testConnection() {
   Serial.println(F("Testing device connections..."));
   bool accelConnection = accelgyro.testConnection();
-  if(!accelConnection){
+  if (!accelConnection) {
     Serial.println(F("MPU6050 connection failed. Retrying."));
   }
 
@@ -114,40 +117,58 @@ void testConnection() {
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
 }
 
-void connectToNetwork(){
+void setupWifiConnection() {
   Serial.println(F("Begin wifi connect."));
 
-//    Serial.print("FW Version:");
-//    Serial.println(wifi.getVersion().c_str());
+  if (wifi.setOprToStation()) {
+    Serial.print(F("to station ok\r\n"));
+  } else {
+    Serial.print(F("to station err\r\n"));
+  }
 
-    if (wifi.setOprToStationSoftAP()) {
-        Serial.print(F("to station + softap ok\r\n"));
-    } else {
-        Serial.print(F("to station + softap err\r\n"));
-    }
+  if (wifi.disableMUX()) {
+    Serial.print(F("single ok\r\n"));
+  } else {
+    Serial.print(F("single err\r\n"));
+  }
 
-    if (wifi.joinAP(ssid, pass)) {
-        Serial.print(F("Join AP success\r\n"));
-    } else {
-        Serial.print(F("Join AP failure\r\n"));
-    }
-    
-    if (wifi.disableMUX()) {
-        Serial.print(F("single ok\r\n"));
-    } else {
-        Serial.print(F("single err\r\n"));
-    }
-    
-    Serial.print(F("setup end\r\n"));
+  Serial.print(F("setup end\r\n"));
+}
+
+void connectToNetwork() {
+  Serial.println(F("Begin wifi connect."));
+
+  //    Serial.print("FW Version:");
+  //    Serial.println(wifi.getVersion().c_str());
+
+  if (wifi.setOprToStation()) {
+    Serial.print(F("to station ok\r\n"));
+  } else {
+    Serial.print(F("to station err\r\n"));
+  }
+
+  if (wifi.joinAP(ssid, pass)) {
+    Serial.print(F("Join AP success\r\n"));
+  } else {
+    Serial.print(F("Join AP failure\r\n"));
+  }
+
+  if (wifi.disableMUX()) {
+    Serial.print(F("single ok\r\n"));
+  } else {
+    Serial.print(F("single err\r\n"));
+  }
+
+  Serial.print(F("setup end\r\n"));
 }
 
 //void setupSD() {
-//  
+//
 //  while (!Serial) {
 //    ; // wait for serial port to connect. Needed for native USB port only
 //  }
 //  pinMode(sdPin, OUTPUT);
-//  
+//
 //  Serial.print(F("Initializing SD card..."));
 //
 //  if (!SD.begin(10)) {
@@ -159,22 +180,28 @@ void connectToNetwork(){
 
 bool isConnected() {
   String ipStatus = wifi.getIPStatus();
-//  Serial.print("IP status: ");
-//  Serial.println(ipStatus);
+  int index = ipStatus.indexOf('\n');
+  if(index != ipStatus.length() - 1) {
+//    Serial.print("IP status: ");
+//    Serial.println(ipStatus);
+    ipStatus = ipStatus.substring(0, index);
+  }
+  Serial.print("IP status: ");
+  Serial.println(ipStatus);
   ipStatus.trim();
-  if(ipStatus == "STATUS:2" || ipStatus == "STATUS:3") {
+  if (ipStatus == "STATUS:2" || ipStatus == "STATUS:3") {
     return true;
-   } else {
+  } else {
     return false;
-   }
+  }
 }
 
 void setLedWifiStatus() {
-  if(isConnected()) {
+  if (isConnected()) {
     setColor(1);
-   } else {
+  } else {
     setColor(2);
-   }
+  }
 }
 
 void hardwareSetup() {
@@ -185,24 +212,22 @@ void hardwareSetup() {
   pinMode(volumeDownButton, INPUT);
   pinMode(volumeUpButton, INPUT);
   pinMode(wifiButton, INPUT);
-  
-  setColor(5);
 }
 
 
 /*
- * Call this function to get number to return to server for how many facts has been played
- */
+   Call this function to get number to return to server for how many facts has been played
+*/
 // get number of facts played since last server pull
 int getServerPlayCount() {
   char serverCountFile[] = "s.txt";
   String numString = "";
   int number = serverCount;
-  if(SD.exists(serverCountFile)) {
+  if (SD.exists(serverCountFile)) {
     File file = SD.open(serverCountFile);
-    while(file.available()) {
+    while (file.available()) {
       char numChar = file.read();
-      if(numChar != '\n') {
+      if (numChar != '\n') {
         numString += numChar;
       }
     }
@@ -210,7 +235,7 @@ int getServerPlayCount() {
     file.close();
   } else {
     // create file
-    File file = SD.open(serverCountFile,FILE_WRITE);
+    File file = SD.open(serverCountFile, FILE_WRITE);
     numString = String(serverCount);
     file.print(numString);
     file.close();
@@ -222,19 +247,19 @@ int getServerPlayCount() {
 // updates count of how many facts have been played since last server pull
 void updateServerPlayCount() {
   char serverCountFile[] = "s.txt";
-  
+
   String numString = String(serverCount);
-  if(SD.exists(serverCountFile)) {
+  if (SD.exists(serverCountFile)) {
     SD.remove(serverCountFile);
   }
   // write file
-  File file = SD.open(serverCountFile,FILE_WRITE);
+  File file = SD.open(serverCountFile, FILE_WRITE);
   file.print(numString);
   file.close();
 
   Serial.print(F("Updated # of facts since last server pull: "));
   Serial.println(numString);
-  
+
   delay(500);
 }
 
@@ -243,14 +268,14 @@ String getPlayFilename() {
   Serial.print(F("Getting file to be played: "));
   String factFilename = "0";
   char playFilename[] = "p.txt";
-  if(SD.exists(playFilename)) {
+  if (SD.exists(playFilename)) {
     // read/write from file
     File file = SD.open(playFilename);
-    if(file) {
+    if (file) {
       factFilename = "";
-      while(file.available()) {
+      while (file.available()) {
         char ltr = file.read();
-        if(ltr != '\n') {
+        if (ltr != '\n') {
           factFilename = factFilename + ltr;
         }
       }
@@ -259,8 +284,8 @@ String getPlayFilename() {
     }
   } else {
     // create file
-    File file = SD.open(playFilename,FILE_WRITE);
-    if(file) {
+    File file = SD.open(playFilename, FILE_WRITE);
+    if (file) {
       file.println("0");
       file.close();
       Serial.println(F("DNE. File created."));
@@ -283,20 +308,20 @@ void updatePlayFileName(String factFilename) {
   numberName = numberName + ".txt";
   numberName.trim();
   char playFilename[] = "p.txt";
-  if(SD.exists(playFilename)) {
-    if(!SD.exists(numberName)) {
+  if (SD.exists(playFilename)) {
+    if (!SD.exists(numberName)) {
       factFilename = "0";
     }
     SD.remove(playFilename);
     // read/write from file
-    File file = SD.open(playFilename,FILE_WRITE);
+    File file = SD.open(playFilename, FILE_WRITE);
     file.println(factFilename);
     file.close();
     Serial.print(F("Updating fact Index: "));
     Serial.println(number);
   } else {
     // create file
-    File file = SD.open(playFilename,FILE_WRITE);
+    File file = SD.open(playFilename, FILE_WRITE);
     file.println("0");
     file.close();
   }
@@ -304,20 +329,21 @@ void updatePlayFileName(String factFilename) {
 }
 
 /**
- * Call this function when storing fact from server
- */
+   Call this function when storing fact from server
+*/
 void storeFact(String factString) {
   File file;
   String filename = String(writeFileNumber);
   filename = filename + ".txt";
   // create/open file and store fact
-  if(SD.exists(filename)) {
+  if (SD.exists(filename)) {
     SD.remove(filename);
   }
   
-  Serial.println(F("Storing Fact: "));
-  file = SD.open(filename,FILE_WRITE);
-  if(file) {
+  Serial.print(F("Storing Fact in file: "));
+  Serial.println(filename);
+  file = SD.open(filename, FILE_WRITE);
+  if (file) {
     Serial.println(factString);
     file.println(factString);
     file.close();
@@ -326,7 +352,7 @@ void storeFact(String factString) {
   // increment name of file to store next fact as
   updateFactStorageIndex();
   // decrement number of facts to retrieve
-  if(serverCount > 0) {
+  if (serverCount > 0) {
     serverCount = serverCount - 1;
     updateServerPlayCount();
   }
@@ -340,20 +366,20 @@ void getFactStorageIndex() {
   File file;
   String number = "0";
   // get filename to store fact as
-  if(SD.exists(writeFilename)) {
+  if (SD.exists(writeFilename)) {
     number = "";
     // read/write from file
     file = SD.open(writeFilename);
-    while(file.available()) {
+    while (file.available()) {
       char num = file.read();
-      if(num != '\n') {
+      if (num != '\n') {
         number = number + String(num);
       }
     }
     file.close();
   } else {
     // create file
-    File file = SD.open(writeFilename,FILE_WRITE);
+    File file = SD.open(writeFilename, FILE_WRITE);
     file.print(number);
     file.close();
   }
@@ -367,14 +393,14 @@ void updateFactStorageIndex() {
   Serial.println(F("Update Fact Storage Index: "));
   char writeFilename[] = "w.txt";
   File file;
-  if(SD.exists(writeFilename)) {
+  if (SD.exists(writeFilename)) {
     SD.remove(writeFilename);
   }
-    
+
   // update fact index of last stored
-  file = SD.open(writeFilename,FILE_WRITE);
+  file = SD.open(writeFilename, FILE_WRITE);
   // if max reached, go back to 0
-  if(writeFileNumber > MAXFILENUM) {
+  if (writeFileNumber > MAXFILENUM) {
     writeFileNumber = 0;
   } else {
     writeFileNumber++;
@@ -393,15 +419,15 @@ void playFact(String factFile) {
   filename.trim();
   Serial.print(F("Fact filename: "));
   Serial.println(filename);
-  emic.speak(filename,10);
+  emic.speak(filename, 10);
   int num = factFile.toInt();
   // increment and store fact index to be played next time
   updatePlayFileName(factFile);
 }
 
 /**
- * Call this function when throw is detected
- */
+   Call this function when throw is detected
+*/
 void getFact() {
   enableAcceleration = false;
   String factFile = getPlayFilename();
@@ -419,13 +445,20 @@ bool checkAcceleration() {
   if ( x_diff > threshold || y_diff > threshold || z_diff > threshold ) {
     Serial.println(F("accel detected"));
     getFact(); // Read fact from EEPROM and plays it
-    if(isConnected()) {
-      getFactFromServer(); //Pull new fact in from server
-    } else {
+    bool serverSuccess = false;
+    if (isConnected()) {
+      if(getFactFromServer()) { // Pull new fact in from server
+        serverSuccess = store1CountOnServer();
+      }
+    } 
+    
+    if(!serverSuccess) {
       serverCount++;
       updateServerPlayCount();
     }
+    
     sampleAcceleration(50); // set delay long enough to  for fact to be played
+    enableAcceleration = true;
     return true;
   } else {
     checkButtons();
@@ -447,119 +480,151 @@ void sampleAcceleration(int samples) {
 
 
 /**
- * REPLACE WITH NEW REQUEST CODE
- */
-void getFactFromServer(){
-   uint8_t buffer[1024] = {0};
-   bool isFact = false;
+   REPLACE WITH NEW REQUEST CODE
+*/
+bool getFactFromServer() {
+  setColor(3);
+  uint8_t buffer[1024] = {0};
+  bool isFact = false;
 
-    if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
-        connectedToNetwork = true;
-        Serial.print("create tcp ok\r\n");
-    } else {
-        connectedToNetwork = false;
-        Serial.print("create tcp err\r\n");
-    }
+  if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
+    //connectedToNetwork = true;
+    Serial.print(F("create server connection ok\r\n"));
+  } else {
+    //connectedToNetwork = false;
+    Serial.print(F("create server connection err\r\n"));
+    return false;
+  }
+  
+  String fact = "";
 
-    char getRequest[100];
-    sprintf(getRequest, "GET /Trivia/%i  HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: close\r\n\r\n", userID.toInt());
-    wifi.send((const uint8_t*)getRequest, strlen(getRequest));
-    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
-    if (len > 0) {
-        for(uint32_t i = 0; i < len; i++) {
-            //Serial.print((char)buffer[i]);
-            if((char)buffer[i] == 34){
-              isFact = !isFact;
-            }
+  String tempId = "2";
 
-            if(isFact && (char)buffer[i] != 34){
-              fact += (char)buffer[i];
-            }
-        }
-        
-        storeFact(fact);
-        Serial.println(fact);
-        fact = "";
+  char getRequest[100];
+  sprintf(getRequest, "GET /Trivia/%i  HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt());
+  wifi.send((const uint8_t*)getRequest, strlen(getRequest));
+  uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
+  if (len > 0) {
+    for (uint32_t i = 0; i < len; i++) {
+      //Serial.print((char)buffer[i]);
+      if ((char)buffer[i] == 34) {
+        isFact = !isFact;
+      }
+
+      if (isFact && (char)buffer[i] != 34) {
+        fact = fact + (char)buffer[i];
+      }
     }
-    
-    if (wifi.releaseTCP()) {
-        Serial.print("release tcp ok\r\n");
-    } else {
-        Serial.print("release tcp err\r\n");
-    }
+  }
+
+//  if (wifi.releaseTCP()) {
+//    Serial.print(F("release get connection ok\r\n"));
+//  } else {
+//    Serial.print(F("release get connection err\r\n"));
+//  }
+
+  if(fact != "") {
+    Serial.println(fact);
+    storeFact(fact);
+
+    return true;
+  }
+
+  return false;
 }
 
 
-void store1CountOnServer(){
-   uint8_t buffer[1024] = {0};
-   bool isFact = false;
+bool store1CountOnServer() {
+  setColor(3);
+  uint8_t buffer[1024] = {0};
+  bool isFact = false;
 
-    if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
-        Serial.print("create tcp ok\r\n");
-        connectedToNetwork = true;
-        setLedWifiStatus();
-    } else {
-        Serial.print("create tcp err\r\n");
-        connectedToNetwork = false;
-        setLedWifiStatus();
-    }
+  if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
+    Serial.print(F("create get count request  ok\r\n"));
 
-    
+    String tempId = "2";
     char putRequest[100];
-    sprintf(putRequest,"PUT /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: close\r\n\r\n", userID.toInt());
+    sprintf(putRequest, "GET /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt());
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
+//
+//    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
+//    if (len > 0) {
+//      for (uint32_t i = 0; i < len; i++) {
+//        Serial.print((char)buffer[i]);
+//      }
+//    }
+    return true;
+  } else {
+    Serial.print(F("create get count err\r\n"));
+    return false;
+  }
 
-    if (wifi.releaseTCP()) {
-        Serial.print("release tcp ok\r\n");
-    } else {
-        Serial.print("release tcp err\r\n");
-    }
+//
+//  if (wifi.releaseTCP()) {
+//    Serial.print("release put connection ok\r\n");
+//  } else {
+//    Serial.print("release put connection err\r\n");
+//  }
 }
 
 //Write to analog outputs
 void setColor(int setting) {
-  if(setting == lastSetting) {
+  if (setting == lastSetting) {
     return;
   }
-  
+
   uint8_t red = 0;
   uint8_t green = 0;
   uint8_t blue = 0;
 
-  switch(setting) {
+  switch (setting) {
     case 0: { // red - low battery
-      red = 255;
-      green = 0;
-      blue = 0;
-      Serial.println(F("red - low battery"));
-      break;
-    }
+        red = 255;
+        green = 0;
+        blue = 0;
+        Serial.println(F("red - low battery"));
+        break;
+      }
     case 1: { // green - connected to wifi
-      red = 0;
-      green = 255;
-      blue = 0;
-      Serial.println(F("green - connected to wifi"));
-      break;
-    }
+        red = 0;
+        green = 255;
+        blue = 0;
+        Serial.println(F("green - connected to wifi"));
+        break;
+      }
     case 2: { // purple - not connected to wifi
-      red = 128;
-      green = 0;
-      blue = 128;
-      Serial.println(("purple - not connected to wifi"));
-      break;
-    }
+        red = 128;
+        green = 0;
+        blue = 128;
+        Serial.println(("purple - not connected to wifi"));
+        break;
+      }
     case 3: { // blue - updating from server
-      red = 0;
-      green = 0;
-      blue = 255;
-      Serial.println(F("blue - updating from server"));
+        red = 0;
+        green = 0;
+        blue = 255;
+        Serial.println(F("blue - updating from server"));
+        break;
+      }
+    case 4: { // white - wifi setup mode
+        red = 255;
+        green = 255;
+        blue = 255;
+        Serial.println(F("white - wifi setup mode"));
+        break;
+      }
+    case 5: { // orange - turning on
+      red = 255;
+      green = 70;
+      blue = 0;
+      Serial.println(F("orange - turning on"));
       break;
     }
-    case 4: { // white - wifi setup mode
+    case 6: { // pink - attempting to connect
       red = 255;
-      green = 255;
-      blue = 255;
-      Serial.println(F("white - wifi setup mode"));
+      green = 10;
+      blue = 10;
+      Serial.println(F("pink - attempting to connect"));
       break;
     }
     default: { // off
@@ -570,7 +635,7 @@ void setColor(int setting) {
       break;
     }
   }
-  
+
   analogWrite(redPin, red);
   analogWrite(greenPin, green);
   analogWrite(bluePin, blue);
@@ -596,7 +661,7 @@ void checkVolumeDownInput() {
       // button press was detected with debouncing taken into account
       if (volumeDownButtonState == HIGH) {
         Serial.println(F("V down"));
-        if(volume > 0) {
+        if (volume > 0) {
           volume = volume - 1;;
         }
         emic -= 10;
@@ -624,7 +689,7 @@ void checkVolumeUpInput() {
       // button press was detected with debouncing taken into account
       if (volumeUpButtonState == HIGH) {
         Serial.println(F("V up"));
-        if(volume < 10) {
+        if (volume < 10) {
           volume++;
         }
         emic += 10;
@@ -652,8 +717,8 @@ void checkWifiButtonInput() {
       // button press was detected with debouncing taken into account
       if (wifiButtonState == 1) {
         wifiSetupMode = true;
-        
-        if(wifiSetupMode) {
+
+        if (wifiSetupMode) {
           Serial.println(F("Wifi setup mode"));
           setColor(4);
           //TODO: put function to call wifi setup mode here
@@ -676,7 +741,7 @@ void tcpMode() {
   //Attempt tcp connection
   bool tcp_created = create_TCP_connection();
 
-  if(tcp_created) {
+  if (tcp_created) {
     //function to carry out the connection to the wifi
     connect_to_wifi();
   }
@@ -699,14 +764,14 @@ void espSetup() {
   Serial.println(mode);
 
   // If mode is correctly set, create the esp's wifi network
-  if(mode) {
-    wifi.setSoftAPParam("myESP", "1234", 3, 0);
+  if (mode) {
+    wifi.setSoftAPParam("Trivio", "1234", 3, 0);
     Serial.print(F("Set AP: "));
     Serial.println(F("complete"));
   }
 
   //Making the esp in single mode so that there is only one connection at a time
-  bool mux_disabled = wifi.disableMUX(); 
+  bool mux_disabled = wifi.disableMUX();
 }
 
 bool disconnect_wifi() {
@@ -729,34 +794,34 @@ bool create_TCP_connection() {
   //creating a TCP connection to the phone
   Serial.println(F("Trying to create a TCP connection"));
   bool tcpCreated = create_TCP();
-  while(tcpCreated == false) {
+  while (tcpCreated == false) {
     Serial.println(F("Couldn't create"));
     tcpCreated = create_TCP();
   }
-  
+
   Serial.println(F("TCP connection initiated"));
   String ack = receive_data(2000);
 
   Serial.print(F("Data received: "));
   Serial.println(ack);
 
-  if(ack.length() <= 0) {
+  if (ack.length() <= 0) {
     Serial.println(F("waiting for ack"));
     restartTCPConnection();
     return false;
   }
-  
-  if(ack == "ok") {
+
+  if (ack == "ok") {
     Serial.println(F("Ack received"));
     //sending ack back
     bool sent = send_data("ok");
-    while(sent == false) {
+    while (sent == false) {
       Serial.println(F("Trying to send ack"));
       sent = send_data("ok");
     }
     Serial.println(F("Ack Sent"));
     return sent;
-  } 
+  }
   else {
     restartTCPConnection();
     return false;
@@ -764,66 +829,48 @@ bool create_TCP_connection() {
 }
 
 void connect_to_wifi() {
-    bool send_confirmation;
-    bool send_failure;  
-    //Waiting for wifi credentials
-    Serial.println(F("Credentials"));
-    String cred = receive_data(120000);
-    Serial.println(F("Credentials received"));
+  bool send_confirmation;
+  bool send_failure;
+  //Waiting for wifi credentials
+  Serial.println(F("Credentials"));
+  String cred = receive_data(120000);
 
-    //separating the credentials
-    bool break_cred = break_credentials(cred);
-    Serial.print(F("Cred separated: "));
-    Serial.println(break_cred);
-  
-    //Trying to connect to the wifi
-    Serial.println(F("Connecting to the wifi..."));
-//    bool connect_wifi = wifi.joinAP(ssid, pass);
-//    if(connect_wifi == true) {
-//      Serial.println(F("Success!!!"));
-//      send_confirmation = send_data("yes");
-//      int count = 0;
-//      while(send_confirmation == false) {
-//        Serial.println(F("Trying to send success"));
-//        send_confirmation = send_data("yes");
-//        count++;
-//        if(count == 5) {
-//          Serial.println(F("Timeout."));
-//          break;
-//        }
-//      }
-//    }
-//    else {
-//      Serial.println(F("Failed :("));
-//      send_failure = send_data("no");
-//      int count = 0;
-//      while(send_failure == false) {
-//        Serial.println(F("Trying to send failure"));
-//        send_failure = send_data("no");
-//        count++;
-//        if(count == 5) {
-//          Serial.println(F("Timeout."));
-//          break;
-//        }
-//      }
-//    }
+  if(cred.length() == 0) {
     Serial.print(F("Turning AP mode off: "));
     Serial.println(wifi.setOprToStation());
     bool closed = wifi.releaseTCP();
     Serial.println(closed);
-
-    connectToNetwork();
-    setLedWifiStatus();
+    return;
   }
+  
+  Serial.println(F("Credentials received"));
+
+  //separating the credentials
+  bool break_cred = break_credentials(cred);
+  Serial.print(F("Cred separated: "));
+  Serial.println(break_cred);
+
+  //Trying to connect to the wifi
+  Serial.println(F("Connecting to the wifi..."));
+  
+  setColor(6);
+  Serial.print(F("Turning AP mode off: "));
+  Serial.println(wifi.setOprToStation());
+  bool closed = wifi.releaseTCP();
+  Serial.println(closed);
+
+  connectToNetwork();
+  setLedWifiStatus();
+}
 
 
 //breaking the credentials received from the phone in the format "ssid:pass"
 bool break_credentials(String data) {
-  if(data.length() > 0) {
+  if (data.length() > 0) {
     int colon_index = data.indexOf(':');
     String userid = data.substring(0, colon_index);
     String rest = data.substring(colon_index + 1);
-    int second_colon = rest.indexOf(':'); 
+    int second_colon = rest.indexOf(':');
     ssid = rest.substring(0, second_colon);
     pass = rest.substring(second_colon + 1);
     Serial.print(F("userid: "));
@@ -832,20 +879,21 @@ bool break_credentials(String data) {
     Serial.println(ssid);
     Serial.print(F("pass: "));
     Serial.println(pass);
+    setUserId(userid);
     return true;
   }
   return false;
 }
 
-//Breaking the IP of device connected as it is given as "ip,mac-address" 
+//Breaking the IP of device connected as it is given as "ip,mac-address"
 String break_ip(String ip) {
   String actual_ip = "";
-  if(ip.length() > 0) {
-      int comma_index = ip.indexOf(',');
-      actual_ip = ip.substring(0, comma_index);
-      Serial.println(actual_ip);
-      return actual_ip;
-    }
+  if (ip.length() > 0) {
+    int comma_index = ip.indexOf(',');
+    actual_ip = ip.substring(0, comma_index);
+    Serial.println(actual_ip);
+    return actual_ip;
+  }
   return "";
 }
 
@@ -856,7 +904,7 @@ bool create_TCP() {
   ip_device = break_ip(ip_device);
   Serial.print("Ip: ");
   Serial.println(ip_device);
-  if(ip_device.length() > 0) {
+  if (ip_device.length() > 0) {
     tcp_created = wifi.createTCP(ip_device, 8080);
   }
   return tcp_created;
@@ -866,13 +914,13 @@ bool create_TCP() {
 bool send_data(String data) {
   int len = data.length();
   byte *buff = new byte[len];
-  for(int i = 0; i < len; i++) {
+  for (int i = 0; i < len; i++) {
     buff[i] = data[i];
   }
   bool sent = wifi.send(buff, len);
   Serial.print(F("Data sending: "));
   Serial.println(data);
-  for(int i = 0; i < len; i++) {
+  for (int i = 0; i < len; i++) {
     Serial.println(buff[i]);
   }
   return sent;
@@ -884,9 +932,9 @@ String receive_data(uint16_t timeout) {
   uint32_t len = wifi.recv(buff, sizeof(buff), timeout);
   String data = "";
 
-  if(len > 0) {
+  if (len > 0) {
     Serial.println(F("Incoming: "));
-    for(int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
       data += char(buff[i]);
     }
     data[len] = '\0';
@@ -898,13 +946,13 @@ String receive_data(uint16_t timeout) {
 // stores user id
 void setUserId(String id) {
   char filename[] = "u.txt";
-  if(SD.exists(filename)) {
+  if (SD.exists(filename)) {
     SD.remove(filename);
   }
-  File file = SD.open(filename,FILE_WRITE);
+  File file = SD.open(filename, FILE_WRITE);
   file.print(id);
   file.close();
-  
+
   delay(500);
 }
 
@@ -914,12 +962,12 @@ void getUserId() {
   File file;
   String number = userID;
   // get filename to read userID
-  if(SD.exists(filename)) {
+  if (SD.exists(filename)) {
     number = "";
     file = SD.open(filename);
-    while(file.available()) { // read from file
+    while (file.available()) { // read from file
       char num = file.read();
-      if(num != '\n') {
+      if (num != '\n') {
         number = number + num;
       }
     }
@@ -927,11 +975,11 @@ void getUserId() {
     file.close();
   } else {
     // create file
-    file = SD.open(filename,FILE_WRITE);
+    file = SD.open(filename, FILE_WRITE);
     file.println(number);
     file.close();
   }
-  Serial.print(F("ID: "));
+  Serial.print(F("User ID: "));
   Serial.println(number);
   userID = number; // update global variable
   delay(500);
@@ -941,13 +989,13 @@ void loop() {
   //if there's incoming data over server connection, read in the fact
 
   checkButtons();
-  if(enableAcceleration){
+  if (enableAcceleration) {
     checkAcceleration();
     setLedWifiStatus();
   }
 
   //connected to network but toy and server not synced, run http requests until synced with each other
-  if(serverCount > 0 && isConnected()){
+  if (serverCount > 0 && isConnected()) {
     getFactFromServer();
     store1CountOnServer();
   }
