@@ -21,6 +21,7 @@ int16_t startingAddress = 4;
 const int MAXFILENUM = 2000;    // maximum number of files for facts
 int writeFileNumber = 0;        // filename of next fact to be stored
 int serverCount = 0;            // number of distinct facts played since last server request
+int downloadCount = 0;          // number of facts to download since last server request
 
 #define sdPin 53
 #define HOST_NAME   "triviotoy.azurewebsites.net"
@@ -94,7 +95,8 @@ void setup() {
   setupWifiConnection();
 
   getFactStorageIndex(); // get filename of last stored fact
-  serverCount = getServerPlayCount();
+  serverCount = getServerPlayCount(); // get number of facts played offline
+  downloadCount = getDownloadCount(); // gets number of facts to download
 
   getUserId();  // get user id stored
 
@@ -268,6 +270,51 @@ void updateServerPlayCount() {
   delay(500);
 }
 
+// get number of facts to download once connected to wifi again
+int getDownloadCount() {
+  char downloadCountFile[] = "d.txt";
+  String numString = "";
+  int number = downloadCount;
+  if (SD.exists(downloadCountFile)) {
+    File file = SD.open(downloadCountFile);
+    while (file.available()) {
+      char numChar = file.read();
+      if (numChar != '\n') {
+        numString += numChar;
+      }
+    }
+    number = numString.toInt();
+    file.close();
+  } else {
+    // create file
+    File file = SD.open(downloadCountFile, FILE_WRITE);
+    numString = String(downloadCount);
+    file.print(numString);
+    file.close();
+  }
+  delay(500);
+  return number;
+}
+
+// updates number of facts to download once connected to wifi again
+void updateDownloadCount() {
+  char downloadCountFile[] = "d.txt";
+
+  String numString = String(downloadCount);
+  if (SD.exists(downloadCountFile)) {
+    SD.remove(downloadCountFile);
+  }
+  // write file
+  File file = SD.open(downloadCountFile, FILE_WRITE);
+  file.print(numString);
+  file.close();
+
+  Serial.print(F("# of Facts left to download: "));
+  Serial.println(numString);
+
+  delay(500);
+}
+
 // gets name of file for fact to be played and stores in global variable
 String getPlayFilename() {
   Serial.print(F("Getting file to be played: "));
@@ -357,9 +404,9 @@ void storeFact(String factString) {
   // increment name of file to store next fact as
   updateFactStorageIndex();
   // decrement number of facts to retrieve
-  if (serverCount > 0) {
-    serverCount = serverCount - 1;
-    updateServerPlayCount();
+  if (downloadCount > 0) {
+    downloadCount = downloadCount - 1;
+    updateDownloadCount();
   }
   delay(500);
   setLedWifiStatus();
@@ -459,7 +506,9 @@ bool checkAcceleration() {
     
     if(!serverSuccess) {
       serverCount++;
+      downloadCount++;
       updateServerPlayCount();
+      updateDownloadCount();
     }
     
     sampleAcceleration(50); // set delay long enough to  for fact to be played
@@ -538,7 +587,7 @@ bool getFactFromServer() {
   return false;
 }
 
-
+// updates server with one fact played
 bool store1CountOnServer() {
   setColor(3);
   uint8_t buffer[1024] = {0};
@@ -551,6 +600,29 @@ bool store1CountOnServer() {
     char putRequest[100];
     sprintf(putRequest, "GET /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt());
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
+    return true;
+  } else {
+    Serial.print(F("create get count err\r\n"));
+    return false;
+  }
+}
+
+// Updates server with how many facts played since last connection
+bool storeOfflineCountOnServer() {
+  setColor(3);
+  uint8_t buffer[1024] = {0};
+  bool isFact = false;
+
+  if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
+    Serial.print(F("create get count request  ok\r\n"));
+
+    String tempId = "2";
+    char putRequest[100];
+    sprintf(putRequest, "GET /User/History/%i/%i HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt(), serverCount);
+    wifi.send((const uint8_t*)putRequest, strlen(putRequest));
+
+    serverCount = 0;
+    updateServerPlayCount();
     return true;
   } else {
     Serial.print(F("create get count err\r\n"));
@@ -984,9 +1056,12 @@ void loop() {
     setLedWifiStatus();
   }
 
-  //connected to network but toy and server not synced, run http requests until synced with each other
+  // get http request for updating fact history
   if (serverCount > 0 && isConnected()) {
+    storeOfflineCountOnServer();
+  }
+  // get http request to download new facts
+  if (downloadCount > 0 && isConnected()) {
     getFactFromServer();
-    store1CountOnServer();
   }
 }
