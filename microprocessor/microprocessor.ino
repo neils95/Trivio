@@ -148,6 +148,20 @@ void setupSD() {
   Serial.println(F("initialization done."));
 }
 
+//Call this function every 5 mins when merged
+//When it returns true, make the led red
+bool batteryPercent() {
+  int volt = battery.voltage();
+  int percent = battery.level();
+  if(percent <= 15) {
+    battery_low = true;
+  }
+  else {
+    battery_low = false;
+  }
+  return battery_low;
+}
+
 /**
  * Attempts to connect to WiFi if not already connnected
  * status global variable holds WiFi status 
