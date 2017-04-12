@@ -5,6 +5,8 @@
 #include "EMIC2.h"
 #include "ESP8266.h"
 #include <WiFi.h>
+#include "Battery.h"
+#include "VoltageReference.h"
 
 #define rxpin 10
 #define txpin 11
@@ -36,7 +38,7 @@ ESP8266 wifi(Serial1);
 String ssid = "Urvashi";
 String pass = "0123456789";
 String userID;
-//bool connectedToNetwork = false;
+
 // led
 #define redPin 3
 #define greenPin 4
@@ -66,6 +68,9 @@ bool enableAcceleration = true;
 
 int lastSetting = 10;
 
+Battery battery(3700, 4300, A0);
+VoltageReference vRef;
+
 void setup() {
   Serial.begin(9600);
   hardwareSetup();
@@ -82,7 +87,7 @@ void setup() {
   // initialize accelerometer
   Serial.println(F("Initializing I2C devices..."));
   accelgyro.initialize();
-  testConnection();     // verify connection
+  accelerometerSetup();     // verify connection
 
   Serial1.begin(9600);  // initialize serial for ESP module
   //connectToNetwork();   // attempt to connect to WiFi network
@@ -91,16 +96,25 @@ void setup() {
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount();
 
-//  Serial.print(F("Turning AP mode off: "));
-//  Serial.println(wifi.setOprToStation());
-
   getUserId();  // get user id stored
+
+  batteryVoltageSetup();
 
   setLedWifiStatus();
   //emic.speak("Hello.");
 }
 
-void testConnection() {
+void hardwareSetup() {
+  // set LED outputs
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(volumeDownButton, INPUT);
+  pinMode(volumeUpButton, INPUT);
+  pinMode(wifiButton, INPUT);
+}
+
+void accelerometerSetup() {
   Serial.println(F("Testing device connections..."));
   bool accelConnection = accelgyro.testConnection();
   if (!accelConnection) {
@@ -117,8 +131,14 @@ void testConnection() {
   accelgyro.getAcceleration(&x_prev, &y_prev, &z_prev);
 }
 
+void batteryVoltageSetup() {
+  vRef.begin();
+  int vcc = vRef.readVcc();
+  battery.begin(vcc, 1); 
+}
+
 void setupWifiConnection() {
-  Serial.println(F("Begin wifi connect."));
+  Serial.println(F("Setting up wifi connect."));
 
   if (wifi.setOprToStation()) {
     Serial.print(F("to station ok\r\n"));
@@ -137,9 +157,6 @@ void setupWifiConnection() {
 
 void connectToNetwork() {
   Serial.println(F("Begin wifi connect."));
-
-  //    Serial.print("FW Version:");
-  //    Serial.println(wifi.getVersion().c_str());
 
   if (wifi.setOprToStation()) {
     Serial.print(F("to station ok\r\n"));
@@ -162,28 +179,10 @@ void connectToNetwork() {
   Serial.print(F("setup end\r\n"));
 }
 
-//void setupSD() {
-//
-//  while (!Serial) {
-//    ; // wait for serial port to connect. Needed for native USB port only
-//  }
-//  pinMode(sdPin, OUTPUT);
-//
-//  Serial.print(F("Initializing SD card..."));
-//
-//  if (!SD.begin(10)) {
-//    Serial.println(F("initialization failed!"));
-//    return;
-//  }
-//  Serial.println(F("initialization done."));
-//}
-
 bool isConnected() {
   String ipStatus = wifi.getIPStatus();
   int index = ipStatus.indexOf('\n');
   if(index != ipStatus.length() - 1) {
-//    Serial.print("IP status: ");
-//    Serial.println(ipStatus);
     ipStatus = ipStatus.substring(0, index);
   }
   Serial.print("IP status: ");
@@ -196,24 +195,30 @@ bool isConnected() {
   }
 }
 
+bool isBatteryLow() {
+  int volt = battery.voltage();
+  int percent = battery.level();
+  if(percent <= 15) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 void setLedWifiStatus() {
+  // Low battery takes priority over wifi
+  if(isBatteryLow()) {
+    setColor(0);
+    return;
+  }
+  // wifi connection status
   if (isConnected()) {
     setColor(1);
   } else {
     setColor(2);
   }
 }
-
-void hardwareSetup() {
-  // set LED outputs
-  pinMode(redPin, OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin, OUTPUT);
-  pinMode(volumeDownButton, INPUT);
-  pinMode(volumeUpButton, INPUT);
-  pinMode(wifiButton, INPUT);
-}
-
 
 /*
    Call this function to get number to return to server for how many facts has been played
@@ -546,28 +551,14 @@ bool store1CountOnServer() {
     char putRequest[100];
     sprintf(putRequest, "GET /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt());
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
-//
-//    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
-//    if (len > 0) {
-//      for (uint32_t i = 0; i < len; i++) {
-//        Serial.print((char)buffer[i]);
-//      }
-//    }
     return true;
   } else {
     Serial.print(F("create get count err\r\n"));
     return false;
   }
-
-//
-//  if (wifi.releaseTCP()) {
-//    Serial.print("release put connection ok\r\n");
-//  } else {
-//    Serial.print("release put connection err\r\n");
-//  }
 }
 
-//Write to analog outputs
+// Write to analog outputs
 void setColor(int setting) {
   if (setting == lastSetting) {
     return;
@@ -986,9 +977,8 @@ void getUserId() {
 }
 
 void loop() {
-  //if there's incoming data over server connection, read in the fact
-
   checkButtons();
+  
   if (enableAcceleration) {
     checkAcceleration();
     setLedWifiStatus();
