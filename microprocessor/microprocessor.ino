@@ -7,6 +7,7 @@
 #include <WiFi.h>
 #include "Battery.h"
 #include "VoltageReference.h"
+#include <EEPROM.h>
 
 #define rxpin 10
 #define txpin 11
@@ -33,10 +34,10 @@ int16_t ax, ay, az;             // current acceleration values
 
 int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
-int32_t threshold = 10000;      // threshold for difference in acceleration
+int32_t threshold = 15000;      // threshold for difference in acceleration
 
 ESP8266 wifi(Serial1);
-String ssid = "Urvashi";
+String ssid = "Christine";
 String pass = "0123456789";
 String userID;
 
@@ -72,12 +73,14 @@ int lastSetting = 10;
 Battery battery(3700, 4300, A0);
 VoltageReference vRef;
 
+int EEPROMaddress = 0;
+
 void setup() {
   Serial.begin(9600);
   hardwareSetup();
   setColor(5);
 
-  //setupSD();
+  setupSD();
   // initialize emic devices
   Serial.println(F("Intializing emic device..."));
   emic.begin(rxpin, txpin, sdPin);
@@ -90,9 +93,14 @@ void setup() {
   accelgyro.initialize();
   accelerometerSetup();     // verify connection
 
+  getEEPROMaddress();
+
   Serial1.begin(9600);  // initialize serial for ESP module
-  //connectToNetwork();   // attempt to connect to WiFi network
   setupWifiConnection();
+  //connectToNetwork(ssid, pass);   // attempt to connect to WiFi network
+//  if(!isConnected()) {
+//    connectStoredWifi();
+//  }
 
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount(); // get number of facts played offline
@@ -102,8 +110,23 @@ void setup() {
 
   batteryVoltageSetup();
 
-  setLedWifiStatus();
-  //emic.speak("Hello.");
+  setLedWifiStatus(true);
+}
+
+void setupSD() {
+  
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  pinMode(sdPin, OUTPUT);
+  
+  Serial.print(F("Initializing SD card..."));
+
+  if (!SD.begin(10)) {
+    Serial.println(F("initialization failed!"));
+    return;
+  }
+  Serial.println(F("initialization done."));
 }
 
 void hardwareSetup() {
@@ -157,8 +180,9 @@ void setupWifiConnection() {
   Serial.print(F("setup end\r\n"));
 }
 
-void connectToNetwork() {
-  Serial.println(F("Begin wifi connect."));
+void connectToNetwork(String wifiName, String password) {
+  Serial.print(F("Connecting to: "));
+  Serial.println(wifiName);
 
   if (wifi.setOprToStation()) {
     Serial.print(F("to station ok\r\n"));
@@ -166,7 +190,7 @@ void connectToNetwork() {
     Serial.print(F("to station err\r\n"));
   }
 
-  if (wifi.joinAP(ssid, pass)) {
+  if (wifi.joinAP(wifiName, password)) {
     Serial.print(F("Join AP success\r\n"));
   } else {
     Serial.print(F("Join AP failure\r\n"));
@@ -183,6 +207,7 @@ void connectToNetwork() {
 
 bool isConnected() {
   String ipStatus = wifi.getIPStatus();
+  checkButtons();
   int index = ipStatus.indexOf('\n');
   if(index != ipStatus.length() - 1) {
     ipStatus = ipStatus.substring(0, index);
@@ -200,6 +225,7 @@ bool isConnected() {
 bool isBatteryLow() {
   int volt = battery.voltage();
   int percent = battery.level();
+  checkButtons();
   if(percent <= 15) {
     return true;
   }
@@ -208,12 +234,15 @@ bool isBatteryLow() {
   }
 }
 
-void setLedWifiStatus() {
+void setLedWifiStatus(bool checkBattery) {
   // Low battery takes priority over wifi
-  if(isBatteryLow()) {
-    setColor(0);
-    return;
+  if(checkBattery) {
+    if(isBatteryLow()) {
+      setColor(0);
+      return;
+    }
   }
+  checkButtons();
   // wifi connection status
   if (isConnected()) {
     setColor(1);
@@ -409,7 +438,7 @@ void storeFact(String factString) {
     updateDownloadCount();
   }
   delay(500);
-  setLedWifiStatus();
+  setLedWifiStatus(true);
 }
 
 // gets index of last stored fact
@@ -542,10 +571,8 @@ bool getFactFromServer() {
   bool isFact = false;
 
   if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
-    //connectedToNetwork = true;
     Serial.print(F("create server connection ok\r\n"));
   } else {
-    //connectedToNetwork = false;
     Serial.print(F("create server connection err\r\n"));
     return false;
   }
@@ -570,12 +597,6 @@ bool getFactFromServer() {
       }
     }
   }
-
-//  if (wifi.releaseTCP()) {
-//    Serial.print(F("release get connection ok\r\n"));
-//  } else {
-//    Serial.print(F("release get connection err\r\n"));
-//  }
 
   if(fact != "") {
     Serial.println(fact);
@@ -811,7 +832,7 @@ void tcpMode() {
 
   // end of tcp mode?
   wifiSetupMode = false;
-  setLedWifiStatus();
+  setLedWifiStatus(false);
 }
 
 void espSetup() {
@@ -922,8 +943,11 @@ void connect_to_wifi() {
   bool closed = wifi.releaseTCP();
   Serial.println(closed);
 
-  connectToNetwork();
-  setLedWifiStatus();
+  connectToNetwork(ssid, pass);
+  setLedWifiStatus(false);
+  if(isConnected()) {
+    storeWifi(ssid, pass);
+  }
 }
 
 
@@ -1048,12 +1072,130 @@ void getUserId() {
   delay(500);
 }
 
+void storeWifi(String wifiName, String password) {
+  char filename[] = "wifi.txt";
+  String credential = wifiName;
+  credential = credential + ":";
+  credential = credential + String(EEPROMaddress);
+
+  File file;
+  file = SD.open(filename, FILE_WRITE);
+  file.println(credential);
+  file.close();
+  storePassword(password);
+}
+
+String getWifiName(String credential) {
+  int colon_index = credential.indexOf(':');
+  String wifiName = credential.substring(0,colon_index);
+  return wifiName;
+}
+int getPasswordAddress(String credential) {
+  int colon_index = credential.indexOf(':');
+  String address = credential.substring(colon_index + 1);
+  address.trim();
+  int passwordAddress = address.toInt();
+  return passwordAddress;
+}
+
+void connectStoredWifi() {
+  char filename[] = "wifi.txt";
+  String credential = "";
+  String password = "";
+
+  File file;
+  // get filename to read userID
+  if (SD.exists(filename)) {
+    file = SD.open(filename);
+    while (file.available()) { 
+      // read from file
+      char letter = file.read();
+      if (letter != '\n') {
+        credential = credential + letter;
+      } else {
+        int passwordAddress = getPasswordAddress(credential);
+        credential = getWifiName(credential);
+        password = getPassword(passwordAddress);
+        connectToNetwork(credential, password);
+        if(isConnected()) {
+          break;
+        }
+        credential = "";
+      }
+    }
+    file.close();
+  }
+}
+
+void storePassword(String password) {
+  for(int i = 0; i < pass.length(); i++) {
+    EEPROM.write(EEPROMaddress, password[i]);
+    EEPROMaddress++;
+  }
+  EEPROM.write(EEPROMaddress,"\0");
+  EEPROMaddress++;
+
+  storeAddress();
+}
+
+String getPassword(int address) {
+  String password = "";
+  char letter = EEPROM.read(address);
+  while(letter != '\0') {
+    letter = EEPROM.read(address);
+    password = password + letter;
+  }
+
+  return password;
+}
+
+void getEEPROMaddress() {
+  char filename[] = "eeprom.txt";
+  String address = "";
+  
+  File file;
+  // get filename to read userID
+  if (SD.exists(filename)) {
+    file = SD.open(filename);
+    while (file.available()) { 
+      // read from file
+      char num = file.read();
+      if (num != '\n') {
+        address = address + num;
+      } 
+    }
+    file.close();
+  } else {
+    file = SD.open(filename, FILE_WRITE);
+    address = "0";
+    file.print(address);
+    file.close();
+  }
+  delay(100);
+
+  EEPROMaddress = address.toInt();
+}
+
+// stores next address for password
+void storeAddress() {
+  char filename[] = "eeprom.txt";
+  File file;
+  if (SD.exists(filename)) {
+    SD.remove(filename);
+  }
+  file = SD.open(filename, FILE_WRITE);
+  String address = String(EEPROMaddress);
+  file.print(address);
+  file.close();
+  delay(100);
+}
+
 void loop() {
   checkButtons();
   
   if (enableAcceleration) {
     checkAcceleration();
-    setLedWifiStatus();
+    setLedWifiStatus(true);
   }
 
   // get http request for updating fact history
