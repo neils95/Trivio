@@ -85,7 +85,7 @@ void setup() {
   Serial.println(F("Intializing emic device..."));
   emic.begin(rxpin, txpin, sdPin);
   emic.setVoice(0);   // sets the voice, there are 9 types, 0 - 8
-  emic.setVolume(0); // sets the volume
+  emic.setVolume(18); // sets the volume
   emic.setRate(150);
 
   // initialize accelerometer
