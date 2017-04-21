@@ -46,7 +46,8 @@ public class FactHistoryActivity extends AppCompatActivity {
 
         factHistoryList = (ListView)findViewById(R.id.historyListView);
         //getRequestId = SaveSharedPreferences.getUserID(this) + "/history";
-        getRequestId = "History/" + "4";
+        getRequestId = "History/" + SaveSharedPreferences.getUserID(this);
+        //getRequestId = "History/" + "18";
 
         mProgressView = findViewById(R.id.fact_progress);
         showProgress(true);

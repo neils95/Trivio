@@ -289,6 +289,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
 
         } catch (JSONException e) {
             e.printStackTrace();
+            return false;
         }
 
         return true;

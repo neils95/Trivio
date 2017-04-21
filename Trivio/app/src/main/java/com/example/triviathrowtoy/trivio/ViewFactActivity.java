@@ -14,7 +14,8 @@ public class ViewFactActivity extends AppCompatActivity {
     private String FACT_PARCEL = "PARCELABLE_FACT";
     private String userId;
     private FactItem factItem;
-    private static String PutRequestUrl = "http://triviotoy.azurewebsites.net/trivia/vote";
+    private static  String requestUrl = "http://triviotoy.azurewebsites.net/Trivia/Vote/";
+    private static String PutRequestUrl = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +25,10 @@ public class ViewFactActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         factItem = bundle.getParcelable(FACT_PARCEL);
 
-        //userId = SaveSharedPreferences.getUserID(this);
-        userId = "4";
+        userId = SaveSharedPreferences.getUserID(this);
+        String factID = factItem.getFactID();
+        PutRequestUrl = requestUrl + factID;
+        //userId = "18";
 
         if(factItem!= null) {
             TextView factTextView = (TextView)findViewById(R.id.factText);
@@ -78,9 +81,9 @@ public class ViewFactActivity extends AppCompatActivity {
         String jsonString;
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.accumulate("triviaId", Double.parseDouble(factItem.getFactID()));
-            jsonObject.accumulate("userId", Double.parseDouble(userId));
-            jsonObject.accumulate("voteType", Double.parseDouble(factItem.getVoteStatus()));
+            jsonObject.accumulate("userVote", Integer.parseInt(factItem.getVoteStatus()));
+            jsonObject.accumulate("userId", Integer.parseInt(userId));
+            jsonObject.accumulate("triviaId", Integer.parseInt(factItem.getFactID()));
         } catch (JSONException e) {
             e.printStackTrace();
         }
