@@ -48,8 +48,8 @@ String userID;
 
 // buttons and volume control
 #define volumeDownButton 6
-#define volumeUpButton 7
-#define wifiButton 8
+#define volumeUpButton 8
+#define wifiButton 7
 long debounceDelay = 10;    // debounce time
 short int volume = 10;
 
@@ -1190,12 +1190,21 @@ void storeAddress() {
   delay(100);
 }
 
+bool checkBattery = true;
+int batteryCount = 0;
+
 void loop() {
   checkButtons();
   
   if (enableAcceleration) {
     checkAcceleration();
-    setLedWifiStatus(true);
+    if(batteryCount == 4) {
+      batteryCount = 0;
+      checkBattery = !checkBattery;
+    } else {
+      batteryCount++;
+    }
+    setLedWifiStatus(checkBattery);
   }
 
   // get http request for updating fact history
