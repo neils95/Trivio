@@ -39,7 +39,7 @@ int32_t threshold = 15000;      // threshold for difference in acceleration
 ESP8266 wifi(Serial1);
 String ssid = "Christine";
 String pass = "0123456789";
-String userID;
+String userID = "";
 
 // led
 #define redPin 3
@@ -70,7 +70,7 @@ bool enableAcceleration = true;
 
 int lastSetting = 10;
 
-Battery battery(3700, 4300, A0);
+Battery battery(3700, 4200, A0);
 VoltageReference vRef;
 
 int EEPROMaddress = 0;
@@ -105,6 +105,8 @@ void setup() {
   getFactStorageIndex(); // get filename of last stored fact
   serverCount = getServerPlayCount(); // get number of facts played offline
   downloadCount = getDownloadCount(); // gets number of facts to download
+  Serial.print(F("Number of facts played offline: "));
+  Serial.println(serverCount);
 
   getUserId();  // get user id stored
 
@@ -212,8 +214,8 @@ bool isConnected() {
   if(index != ipStatus.length() - 1) {
     ipStatus = ipStatus.substring(0, index);
   }
-  Serial.print("IP status: ");
-  Serial.println(ipStatus);
+//  Serial.print("IP status: ");
+//  Serial.println(ipStatus);
   ipStatus.trim();
   if (ipStatus == "STATUS:2" || ipStatus == "STATUS:3") {
     return true;
@@ -225,6 +227,8 @@ bool isConnected() {
 bool isBatteryLow() {
   int volt = battery.voltage();
   int percent = battery.level();
+  Serial.print(F("Battery percent: "));
+  Serial.println(percent);
   checkButtons();
   if(percent <= 15) {
     return true;
@@ -445,7 +449,7 @@ void storeFact(String factString) {
 void getFactStorageIndex() {
   char writeFilename[] = "w.txt";
   File file;
-  String number = "0";
+  String number = "100";
   // get filename to store fact as
   if (SD.exists(writeFilename)) {
     number = "";
@@ -566,6 +570,11 @@ void sampleAcceleration(int samples) {
    REPLACE WITH NEW REQUEST CODE
 */
 bool getFactFromServer() {
+
+  if(userID == "") {
+    return false;
+  }
+  
   setColor(3);
   uint8_t buffer[1024] = {0};
   bool isFact = false;
@@ -579,10 +588,8 @@ bool getFactFromServer() {
   
   String fact = "";
 
-  String tempId = "2";
-
   char getRequest[100];
-  sprintf(getRequest, "GET /Trivia/%i  HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt());
+  sprintf(getRequest, "GET /Trivia/%i  HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", userID.toInt());
   wifi.send((const uint8_t*)getRequest, strlen(getRequest));
   uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
   if (len > 0) {
@@ -599,7 +606,7 @@ bool getFactFromServer() {
   }
 
   if(fact != "") {
-    Serial.println(fact);
+    //Serial.println(fact);
     storeFact(fact);
 
     return true;
@@ -610,16 +617,23 @@ bool getFactFromServer() {
 
 // updates server with one fact played
 bool store1CountOnServer() {
+
+  if(userID == "") {
+    return false;
+  }
+
+  Serial.println(F("Storing 1 count on server"));
+  
   setColor(3);
   uint8_t buffer[1024] = {0};
   bool isFact = false;
-
+  
   if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
     Serial.print(F("create get count request  ok\r\n"));
 
-    String tempId = "2";
+    //String tempId = "2";
     char putRequest[100];
-    sprintf(putRequest, "GET /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt());
+    sprintf(putRequest, "GET /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", userID.toInt());
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
     return true;
   } else {
@@ -630,23 +644,52 @@ bool store1CountOnServer() {
 
 // Updates server with how many facts played since last connection
 bool storeOfflineCountOnServer() {
+  if(userID == "") {
+    return false;
+  }
+
+  
   setColor(3);
   uint8_t buffer[1024] = {0};
   bool isFact = false;
 
   if (wifi.createTCP(HOST_NAME, HOST_PORT)) {
-    Serial.print(F("create get count request  ok\r\n"));
+    Serial.print(F("create store offline count request  ok\r\n"));
 
-    String tempId = "2";
+    Serial.print(F("Storing Offline count on server: "));
+    Serial.println(serverCount);
+
+    String request = "GET /User/History/";
+    request = request + userID.toInt();
+    request = request + "/";
+    request = request + serverCount;
+    request = request + " HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n";
     char putRequest[100];
-    sprintf(putRequest, "GET /User/History/%i/%i HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", tempId.toInt(), serverCount);
+    for(int i = 0; i < request.length(); i++) {
+      putRequest[i] = request[i];
+    }
+    Serial.print(F("Request: "));
+    Serial.println(request);
+    //sprintf(putRequest, "GET /User/History/%i/%i HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", userID.toInt(), serverCount);
+
+    Serial.print(F("Storing Offline count on server 2: "));
+    Serial.println(serverCount);
+    
+    Serial.println(putRequest);
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
+
+//    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
+//  if (len > 0) {
+//    for (uint32_t i = 0; i < len; i++) {
+//      Serial.print((char)buffer[i]);
+//    }
+//  }
 
     serverCount = 0;
     updateServerPlayCount();
     return true;
   } else {
-    Serial.print(F("create get count err\r\n"));
+    Serial.print(F("create store offline count err\r\n"));
     return false;
   }
 }
@@ -829,10 +872,6 @@ void tcpMode() {
     //function to carry out the connection to the wifi
     connect_to_wifi();
   }
-
-  // end of tcp mode?
-  wifiSetupMode = false;
-  setLedWifiStatus(false);
 }
 
 void espSetup() {
@@ -871,7 +910,14 @@ void restartTCPConnection() {
   Serial.print(F("Restarting tcp connection: "));
   bool cl = wifi.releaseTCP();
   Serial.println(cl);
-  create_TCP_connection();
+  //create_TCP_connection();
+
+  bool tcp_created = create_TCP_connection();
+
+  if (tcp_created) {
+    //function to carry out the connection to the wifi
+    connect_to_wifi();
+  }
 }
 
 bool create_TCP_connection() {
