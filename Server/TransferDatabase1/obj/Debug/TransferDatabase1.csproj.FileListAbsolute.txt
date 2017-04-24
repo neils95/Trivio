@@ -8,3 +8,13 @@ C:\Users\neils\Documents\Learning\ASP.NET\TransferDatabase1\bin\Debug\EntityFram
 C:\Users\neils\Documents\Learning\ASP.NET\TransferDatabase1\obj\Debug\TransferDatabase1.csprojResolveAssemblyReference.cache
 C:\Users\neils\Documents\Learning\ASP.NET\TransferDatabase1\obj\Debug\TransferDatabase1.exe
 C:\Users\neils\Documents\Learning\ASP.NET\TransferDatabase1\obj\Debug\TransferDatabase1.pdb
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\TransferDatabase1.exe.config
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\obj\Debug\TransferDatabase1.exe
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\obj\Debug\TransferDatabase1.pdb
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\TransferDatabase1.exe
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\TransferDatabase1.pdb
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\EntityFramework.dll
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\EntityFramework.SqlServer.dll
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\EntityFramework.xml
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\bin\Debug\EntityFramework.SqlServer.xml
+C:\Users\neils\Documents\BU\Spring 2017\EC464\Code\Trivio\Server\TransferDatabase1\obj\Debug\TransferDatabase1.csprojResolveAssemblyReference.cache

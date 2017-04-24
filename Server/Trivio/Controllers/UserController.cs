@@ -39,6 +39,7 @@ namespace Trivio.Controllers
 				if(rx.IsMatch(newUser.Email)) //valid email
 				 {
 					var user = Mapper.Map<User>(newUser);
+					user.TriviaCount = 499;	//Default cache size is 500
 					db.Users.Add(user);
 					await db.SaveChangesAsync();
 
@@ -103,22 +104,24 @@ namespace Trivio.Controllers
 			});
 		}
 
-		//PUT: User/History/{UserId}/{Count}
-		[HttpPut, Route("History/{userId}/{triviaCount}")]
+		//GET: User/History/{UserId}/{Count}
+		[HttpGet, Route("History/{userId}/{triviaCount}")]
 		[ResponseType(typeof(void))]
 		public async Task<IHttpActionResult> UpdateUserTriviaHistory(int userId, int triviaCount)
 		{
 			User user = await db.Users.FindAsync(userId);
 
 			//Check if triviacount is greater than the number of facts user has heard.
-			if (user == null || triviaCount < 1 || (user.TriviaHistoryCount + triviaCount > user.TriviaCount))
+			if (user == null || triviaCount < 1) 
 			{
 				return BadRequest("Invalid User Id/Trivia Count must be a number");
 			}
 
+			if (user.TriviaHistoryCount + triviaCount > user.TriviaCount) triviaCount = user.TriviaCount - user.TriviaHistoryCount;
 
 			for (int i = user.TriviaHistoryCount + 1; i <= user.TriviaHistoryCount + triviaCount; i++)
 			{
+
 				db.UserTriviaHistories.Add(new UserTriviaHistory
 					{
 						TriviaId = i,
@@ -128,8 +131,7 @@ namespace Trivio.Controllers
 				);
 			}
 			user.TriviaHistoryCount+=triviaCount;
-
-
+			
 			await db.SaveChangesAsync();
 			return Ok();
 		}
@@ -141,70 +143,6 @@ namespace Trivio.Controllers
 		public IQueryable<UserPublicDTO> GetUser()
         {
             return db.Users.ProjectTo<UserPublicDTO>();
-        }
-
-        // GET: Users/5
-        [ResponseType(typeof(User))]
-        public async Task<IHttpActionResult> GetUser(int id)
-        {
-            User user = await db.Users.FindAsync(id);
-            if (user == null)
-            {
-                return BadRequest("Invalid User Id");
-            }
-
-            return Ok(Mapper.Map<UserPublicDTO>(user));
-        }
-
-        // PUT: User/5
-        [ResponseType(typeof(void))]
-        public async Task<IHttpActionResult> PutUser(int id, User user)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
-
-            db.Entry(user).State = EntityState.Modified;
-
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return StatusCode(HttpStatusCode.NoContent);
-        }
-
-        // DELETE: User/5
-        [ResponseType(typeof(User))]
-        public async Task<IHttpActionResult> DeleteUser(int id)
-        {
-            User user = await db.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            db.Users.Remove(user);
-            await db.SaveChangesAsync();
-
-            return Ok(user);
         }
 		
         protected override void Dispose(bool disposing)

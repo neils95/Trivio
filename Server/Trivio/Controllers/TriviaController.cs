@@ -32,16 +32,16 @@ namespace Trivio.Controllers
 			}
 
 			//Increment trivia count and return trivia at new row
-			
-			string trivia = (await db.Trivias.FindAsync(++user.TriviaCount)).Text;
-			while(trivia.Length>=150)
-			{
-				trivia = (await db.Trivias.FindAsync(++user.TriviaCount)).Text;
+			try {
+				string trivia = (await db.Trivias.FindAsync(++user.TriviaCount)).Text;
+				await db.SaveChangesAsync();
+				return Ok(trivia);
 			}
-
-			await db.SaveChangesAsync();
-
-			return Ok(trivia);
+			catch
+			{
+				return NotFound();
+			}
+			
 		}
 
 		//PUT: Trivia/Vote
@@ -125,83 +125,6 @@ namespace Trivio.Controllers
 
 
 		//---------------------------------------------------------------------------------------
-		// GET: api/Trivia
-		public IQueryable<Trivia> GetTrivias()
-        {
-            return db.Trivias;
-        }
-
-
-		// PUT: api/Trivia/5
-		[ResponseType(typeof(void))]
-		public async Task<IHttpActionResult> PutTrivia(int id, Trivia trivia)
-		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(ModelState);
-			}
-
-			if (id != trivia.Id)
-			{
-				return BadRequest();
-			}
-
-
-			db.Entry(trivia).State = EntityState.Modified;
-
-			try
-			{
-				await db.SaveChangesAsync();
-			}
-			catch (DbUpdateConcurrencyException)
-			{
-				if (!TriviaExists(id))
-				{
-					return NotFound();
-				}
-				else
-				{
-					throw;
-				}
-			}
-
-			return StatusCode(HttpStatusCode.NoContent);
-		}
-
-
-		// POST: api/Trivia
-
-		[ResponseType(typeof(Trivia))]
-        public async Task<IHttpActionResult> PostTrivia(Trivia trivia)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            db.Trivias.Add(trivia);
-            await db.SaveChangesAsync();
-
-            return CreatedAtRoute("DefaultApi", new { id = trivia.Id }, trivia);
-        }
-
-        // DELETE: api/Trivia/5
-        [ResponseType(typeof(Trivia))]
-        public async Task<IHttpActionResult> DeleteTrivia(int id)
-        {
-            Trivia trivia = await db.Trivias.FindAsync(id);
-            if (trivia == null)
-            {
-                return NotFound();
-            }
-
-            db.Trivias.Remove(trivia);
-            await db.SaveChangesAsync();
-
-            return Ok(trivia);
-        }
-
-
         protected override void Dispose(bool disposing)
         {
             if (disposing)

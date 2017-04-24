@@ -18,14 +18,18 @@ namespace TransferDatabase1
 			{
 				foreach (var trivia in oldDb.Trivias)
 				{
-					newDb.Trivias.Add(new NewDb.Trivia()
+					if(trivia.Text.Length<=140)
 					{
-						Text = trivia.Text,
-						Upvotes = 0,
-						Downvotes = 0
-					});
-					Console.WriteLine(trivia.Id + ": " + trivia.Text);
-					newDb.SaveChanges();
+
+						newDb.Trivias.Add(new NewDb.Trivia()
+						{
+							Text = trivia.Text,
+							Upvotes = 0,
+							Downvotes = 0
+						});
+						Console.WriteLine(trivia.Id + ": " + trivia.Text);
+						newDb.SaveChanges();
+					}
 				}
 			}
 			catch (Exception e)
