@@ -1,0 +1,13 @@
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\Parser.exe.config
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\Parser.exe
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\Parser.pdb
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\EntityFramework.dll
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\EntityFramework.SqlServer.dll
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\EntityFramework.xml
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\EntityFramework.SqlServer.xml
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\obj\Debug\Parser.csprojResolveAssemblyReference.cache
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\obj\Debug\Parser.exe
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\obj\Debug\Parser.pdb
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\HtmlAgilityPack.dll
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\HtmlAgilityPack.pdb
+C:\Users\neils\Documents\Learning\ASP.NET\Parser\bin\Debug\HtmlAgilityPack.xml

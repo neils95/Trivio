@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="IIS Web Application Name" description="" value="Trivio" tags="IisApp">
+    <parameterEntry kind="ProviderPath" scope="IisApp" match="^C:\\Users\\neils\\Documents\\BU\\Spring\ 2017\\EC464\\Code\\Trivio\\Server\\Trivio\\obj\\Release\\Package\\PackageTmp$" />
+    <parameterEntry kind="ProviderPath" scope="setAcl" match="^C:\\Users\\neils\\Documents\\BU\\Spring\ 2017\\EC464\\Code\\Trivio\\Server\\Trivio\\obj\\Release\\Package\\PackageTmp$" />
+  </parameter>
+  <parameter name="TrivioContext-Web.config Connection String" description="" value="Data Source=tcp:triviodbserver.database.windows.net,1433;Initial Catalog=Trivio_db;Persist Security Info=True;User ID=triviathrowtoy@gmail.com@triviodbserver.com;Password=seniordesign123!" tags="">
+    <parameterEntry kind="XmlFile" scope="C:\\Users\\neils\\Documents\\BU\\Spring\ 2017\\EC464\\Code\\Trivio\\Server\\Trivio\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='TrivioContext']/@connectionString" />
+  </parameter>
+</parameters>
