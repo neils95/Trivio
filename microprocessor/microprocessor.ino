@@ -19,7 +19,7 @@ int16_t startingAddress = 4;
 #endif
 
 
-const int MAXFILENUM = 2000;    // maximum number of files for facts
+const int MAXFILENUM = 500;    // maximum number of files for facts
 int writeFileNumber = 0;        // filename of next fact to be stored
 int serverCount = 0;            // number of distinct facts played since last server request
 int downloadCount = 0;          // number of facts to download since last server request
@@ -34,7 +34,7 @@ int16_t ax, ay, az;             // current acceleration values
 
 int16_t x_prev, y_prev, z_prev; // previous acceleration values
 int16_t x_diff, y_diff, z_diff; // difference in accelerations from last sampled time
-int32_t threshold = 15000;      // threshold for difference in acceleration
+int32_t threshold = 17000;//15000;      // threshold for difference in acceleration
 
 ESP8266 wifi(Serial1);
 String ssid = "Christine";
@@ -70,7 +70,7 @@ bool enableAcceleration = true;
 
 int lastSetting = 10;
 
-Battery battery(3700, 4200, A0);
+Battery battery(3000, 3500, A0);
 VoltageReference vRef;
 
 int EEPROMaddress = 0;
@@ -112,7 +112,7 @@ void setup() {
 
   batteryVoltageSetup();
 
-  setLedWifiStatus(true);
+  setLedWifiStatus(false);
 }
 
 void setupSD() {
@@ -161,6 +161,7 @@ void accelerometerSetup() {
 void batteryVoltageSetup() {
   vRef.begin();
   int vcc = vRef.readVcc();
+  //battery.begin(vcc, 1); 
   battery.begin(vcc, 1); 
 }
 
@@ -227,8 +228,8 @@ bool isConnected() {
 bool isBatteryLow() {
   int volt = battery.voltage();
   int percent = battery.level();
-  Serial.print(F("Battery percent: "));
-  Serial.println(percent);
+  //Serial.print(F("Battery percent: "));
+  //Serial.println(percent);
   checkButtons();
   if(percent <= 15) {
     return true;
@@ -442,14 +443,14 @@ void storeFact(String factString) {
     updateDownloadCount();
   }
   delay(500);
-  setLedWifiStatus(true);
+  setLedWifiStatus(false);
 }
 
 // gets index of last stored fact
 void getFactStorageIndex() {
   char writeFilename[] = "w.txt";
   File file;
-  String number = "100";
+  String number = "0";
   // get filename to store fact as
   if (SD.exists(writeFilename)) {
     number = "";
@@ -485,7 +486,7 @@ void updateFactStorageIndex() {
   // update fact index of last stored
   file = SD.open(writeFilename, FILE_WRITE);
   // if max reached, go back to 0
-  if (writeFileNumber > MAXFILENUM) {
+  if (writeFileNumber >= MAXFILENUM) {
     writeFileNumber = 0;
   } else {
     writeFileNumber++;
@@ -538,10 +539,12 @@ bool checkAcceleration() {
     } 
     
     if(!serverSuccess) {
-      serverCount++;
-      downloadCount++;
-      updateServerPlayCount();
-      updateDownloadCount();
+      if(serverCount < MAXFILENUM) {
+        serverCount++;
+        downloadCount++;
+        updateServerPlayCount();
+        updateDownloadCount();
+      }
     }
     
     sampleAcceleration(50); // set delay long enough to  for fact to be played
@@ -565,10 +568,6 @@ void sampleAcceleration(int samples) {
   }
 }
 
-
-/**
-   REPLACE WITH NEW REQUEST CODE
-*/
 bool getFactFromServer() {
 
   if(userID == "") {
@@ -592,23 +591,38 @@ bool getFactFromServer() {
   sprintf(getRequest, "GET /Trivia/%i  HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", userID.toInt());
   wifi.send((const uint8_t*)getRequest, strlen(getRequest));
   uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
+  String requestCode = "";
+  bool checkRequestCode = true;
+  bool okRequest = false;
   if (len > 0) {
     for (uint32_t i = 0; i < len; i++) {
       //Serial.print((char)buffer[i]);
+      // check request
+      if(checkRequestCode) {
+        requestCode = requestCode + (char)buffer[i];
+        if(requestCode == "HTTP/1.1 200 OK") {
+          checkRequestCode = false;
+          okRequest = true;
+          Serial.print(F("Request code: "));
+          Serial.println(requestCode);
+        }
+      }
+
+      // beginning of fact
       if ((char)buffer[i] == 34) {
         isFact = !isFact;
       }
 
+      // get fact
       if (isFact && (char)buffer[i] != 34) {
         fact = fact + (char)buffer[i];
       }
     }
   }
 
-  if(fact != "") {
+  if(fact != "" && okRequest) {
     //Serial.println(fact);
     storeFact(fact);
-
     return true;
   }
 
@@ -635,6 +649,34 @@ bool store1CountOnServer() {
     char putRequest[100];
     sprintf(putRequest, "GET /User/History/%i/1 HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", userID.toInt());
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
+
+    String requestCode = "";
+    bool checkRequestCode = true;
+    bool okRequest = false;
+
+    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
+    if (len > 0) {
+      for (uint32_t i = 0; i < len; i++) {
+        //Serial.print((char)buffer[i]);
+        // check request
+        if(checkRequestCode) {
+          requestCode = requestCode + (char)buffer[i];
+          if(requestCode == "HTTP/1.1 200 OK") {
+            checkRequestCode = false;
+            okRequest = true;
+            Serial.print(F("Request code: "));
+            Serial.println(requestCode);
+            break;
+          }
+        }
+      }
+    }
+
+    if(!okRequest) {
+      Serial.print(F("create get count err\r\n"));
+      return false;
+    }
+    
     return true;
   } else {
     Serial.print(F("create get count err\r\n"));
@@ -647,7 +689,6 @@ bool storeOfflineCountOnServer() {
   if(userID == "") {
     return false;
   }
-
   
   setColor(3);
   uint8_t buffer[1024] = {0};
@@ -668,22 +709,39 @@ bool storeOfflineCountOnServer() {
     for(int i = 0; i < request.length(); i++) {
       putRequest[i] = request[i];
     }
-    Serial.print(F("Request: "));
-    Serial.println(request);
+    //Serial.print(F("Request: "));
+    //Serial.println(request);
     //sprintf(putRequest, "GET /User/History/%i/%i HTTP/1.1\r\nHost: triviotoy.azurewebsites.net\r\nConnection: keep-alive\r\n\r\n", userID.toInt(), serverCount);
-
-    Serial.print(F("Storing Offline count on server 2: "));
-    Serial.println(serverCount);
+    //Serial.println(putRequest);
     
-    Serial.println(putRequest);
     wifi.send((const uint8_t*)putRequest, strlen(putRequest));
 
-//    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
-//  if (len > 0) {
-//    for (uint32_t i = 0; i < len; i++) {
-//      Serial.print((char)buffer[i]);
-//    }
-//  }
+    String requestCode = "";
+    bool checkRequestCode = true;
+    bool okRequest = false;
+
+    uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
+    if (len > 0) {
+      for (uint32_t i = 0; i < len; i++) {
+        //Serial.print((char)buffer[i]);
+        // check request
+        if(checkRequestCode) {
+          requestCode = requestCode + (char)buffer[i];
+          if(requestCode == "HTTP/1.1 200 OK") {
+            checkRequestCode = false;
+            okRequest = true;
+            Serial.print(F("Request code: "));
+            Serial.println(requestCode);
+            break;
+          }
+        }
+      }
+    }
+
+    if(!okRequest) {
+      Serial.print(F("create store offline count err\r\n"));
+      return false;
+    }
 
     serverCount = 0;
     updateServerPlayCount();
@@ -788,9 +846,7 @@ void checkVolumeDownInput() {
       // button press was detected with debouncing taken into account
       if (volumeDownButtonState == HIGH) {
         Serial.println(F("V down"));
-        if (volume > 0) {
-          volume = volume - 1;;
-        }
+        emic.speak("Volume down.");
         emic -= 10;
       }
     }
@@ -816,9 +872,7 @@ void checkVolumeUpInput() {
       // button press was detected with debouncing taken into account
       if (volumeUpButtonState == HIGH) {
         Serial.println(F("V up"));
-        if (volume < 10) {
-          volume++;
-        }
+        emic.speak("Volume up.");
         emic += 10;
       }
     }
@@ -991,9 +1045,9 @@ void connect_to_wifi() {
 
   connectToNetwork(ssid, pass);
   setLedWifiStatus(false);
-  if(isConnected()) {
-    storeWifi(ssid, pass);
-  }
+//  if(isConnected()) {
+//    storeWifi(ssid, pass);
+//  }
 }
 
 
@@ -1107,10 +1161,11 @@ void getUserId() {
     number.trim();
     file.close();
   } else {
-    // create file
-    file = SD.open(filename, FILE_WRITE);
-    file.println(number);
-    file.close();
+//    // create file
+//    file = SD.open(filename, FILE_WRITE);
+//    file.println(number);
+//    file.close();
+      emic.speak("Please setup wifi using mobile application.");
   }
   Serial.print(F("User ID: "));
   Serial.println(number);
@@ -1236,21 +1291,33 @@ void storeAddress() {
   delay(100);
 }
 
-bool checkBattery = true;
-int batteryCount = 0;
+bool checkBattery = false;
+int batteryLEDCount = 0;
+int batteryTimer = 120;
+bool batteryLow = false;
 
 void loop() {
   checkButtons();
   
   if (enableAcceleration) {
     checkAcceleration();
-    if(batteryCount == 4) {
-      batteryCount = 0;
+    if(batteryLEDCount == 4 && batteryLow) {
+      emic.ready();
+      batteryLEDCount = 0;
       checkBattery = !checkBattery;
     } else {
-      batteryCount++;
+      batteryLEDCount++;
     }
     setLedWifiStatus(checkBattery);
+  }
+
+  if(batteryTimer >= 120) {
+    Serial.println(F("Checking Battery percentage."));
+    checkBattery = false;
+    batteryLow = isBatteryLow();
+    batteryTimer = 0;
+  } else {
+    batteryTimer++;
   }
 
   // get http request for updating fact history
