@@ -1165,7 +1165,6 @@ void getUserId() {
 //    file = SD.open(filename, FILE_WRITE);
 //    file.println(number);
 //    file.close();
-      emic.speak("Please setup wifi using mobile application.");
   }
   Serial.print(F("User ID: "));
   Serial.println(number);
@@ -1295,6 +1294,7 @@ bool checkBattery = false;
 int batteryLEDCount = 0;
 int batteryTimer = 120;
 bool batteryLow = false;
+bool startUp = true;
 
 void loop() {
   checkButtons();
@@ -1318,6 +1318,13 @@ void loop() {
     batteryTimer = 0;
   } else {
     batteryTimer++;
+  }
+
+  if(startUp) {
+    startUp = false;
+    if(userID == "") {
+      emic.speak("Please setup Internet using mobile application.");
+    }
   }
 
   // get http request for updating fact history
