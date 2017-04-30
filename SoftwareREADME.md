@@ -1,5 +1,43 @@
 <h1>Software README</h1>
 
+<h2>Server</h2>
+<p>The server code is written using ASP.NET framework. To replicate, create a new Web API with Read/Write controller classes.It is hosted on azure web services. </p>
+
+<h3>Controllers</h3>
+The binaries in this folder expose the API, hosted on http://triviotoy.azurewebsites.net/. Detailed API documenttaionsm including all the paths,response paramenters and return values can be found at http://triviotoy.azurewebsites.net/Help.
+<ul>
+<li><h4>TriviaController.cs</h4></li>
+Base path of this controller is /Trivia. It contains necessary functions to get a new trivia for a user and vote on trivia.
+<li><h4>UserController.cs</h4></li>
+Base path of this controller is /User. It contains necessary functions to register, login and access a user's trivia history.
+
+</ul>
+
+<h3>Other binaries</h3>
+<ul>
+<li><h4>MappingProfile.cs</h4></li>
+Required to configure AutoMapper. A tool which must be downloaded from npm and allows mapping fields from one class to another. Each model has a corresponding DTO, which is the class used in controllers.
+<li><h4>Web.config.cs</h4></li>
+Contains database connections strings.
+<li><h4>Migrations.Configrations.cs</h4></li>
+Since the database is set up using entity framewok's code first, it must be set up using migrations. As the first migration, any database seed values must be configured in this binary.
+</ul>
+
+<h2>Database</h2>
+<h3>Models</h3>
+These are Entity framework models. Each table maps to a corresponding class. Columns are represented as properties.
+<ul>
+<li><h4>Trivia.cs</h4></li>
+Trivia table object. Columns: Trivia text, upvotes,downvotes and Id.
+<li><h4>User.cs</h4></li>
+User table object. Columns: Name,Email,Password, trivia count and history count.
+
+<li><h4>UserTriviaHistory.cs</h4></li>
+A join between the user and trivia tables. With additional properties: user vote.
+
+</ul>
+<h3>Database schema</h3>
+
 <h2>Arduino</h2>
 
 <h3>Battery.cpp</h3>
