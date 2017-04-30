@@ -5,10 +5,34 @@
 <h3>Battery.cpp</h3>
 
 <h3>EMIC2.cpp</h3>
+<p>This is an Arduino library for interfacing the Emic 2 Text-to-Speech module. With the library, one can change the characteristics of the speech on the module through the use of methods and operators, for a less technical and more natural way of control. It can send messages provided as an immediate argument to a method, or by reference through a file in an SD card.
+
+<br>An instance of the EMIC2 class has to have been created before utilizing the Emic 2 module. Then the instance gets initialized by calling begin(uint8_t rx_pin, uint8_t tx_pin, uint8_t cs_pin) with arguments the RX and TX pins of the (software) serial port, and optionally the CS pin for the chip select line of the SD card.
+
+<br>The class provides, among others, methods for setting the voice, the language, and the parser. It also provides methods for tweaking parameters that are independent of the choice of parser, such as volume and speaking rate.
+
+<br>Parameters that are dependent to the choice of parser can be looked at the manual, and set by sending a direct command to the module, by using the sendCmd method.
+
+<br>A message can be sent by calling the speak method on an instance of the class, with argument any type of data. (e.g. emic.speak("I'm the Emic 2 Module");)
+
+<br>The speak method can also read files from an SD Card. By providing a filename as an argument, the method will read the file in the emic2 folder (that you will have to have created) and it will send a message to the Emic 2 module for every line in the file. (e.g. emic.speak("greeting.txt",SD_C);)
+
+<br>Special use of operators, that they act upon an instance of the class, can further simplify the process of interfacing with the module:
+
+<br>~emic; - pauses/unpauses playback
+<br>!emic; - stops playback
+<br>++emic; - raises volume level by 1dB
+<br>--emic; - lowers volume level by 1dB
+<br>emic += value; - raises volume level by value dB
+<br>emic -= value; - lowers volume level by value dB
+<br>emic >> value; - increases speaking rate by value words/minute
+<br>emic << value; - decreases speaking rate by value words/minute</p>
 
 <h3>ESP8266.cpp</h3>
 
 <h3>I2Cdev.cpp</h3>
+
+The I2C Device Library (i2cdevlib) is a collection of uniform and well-documented classes to provide simple and intuitive interfaces to I2C devices. Each device is built to make use of the generic "I2Cdev" class, which abstracts the I2C bit- and byte-level communication away from each specific device class, making it easy to keep the device class clean while providing a simple way to modify just one class to port the I2C communication code onto different platforms (Arduino, PIC, MSP430, Jennic, simple bit-banging, etc.). Device classes are designed to provide complete coverage of all functionality described by each device's documentation, plus any generic convenience functions that are helpful.
 
 <h3>MPU6050.cpp</h3>
 
