@@ -1,2 +1,2 @@
-# Trivio
-Senior Design Project
+# Trivio Engineering Addendum
+
