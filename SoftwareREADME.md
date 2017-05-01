@@ -187,3 +187,26 @@ wants the trivia toy to connect to. There are also UIlabels that instruct the us
 a socket is opened to interact with the trivia toy via a TCP connection. The TCP connection is a three-way handshake between the toy and the application to ensure
 security when the message is being sent. Once the connection is made, the application sends along the ssid, password and userID to they toy so that the toy can connect to wifi and keep
 track of the right user's activity. </p>
+
+<h2>Android App</h2>
+<h3>MainActivity.java</h3>
+<p>MainActivity is launched when the android app is first opened. It checks if the user is logged in or not by creating a class called SaveSharedPreferences which contains a function that will save the username to the phone if the user has logged in successfully and a function that checks if there is a username saved, allowing the user to stay signed in between sessions. If there is no username saved, MainActivity launches LoginActivity. If there is, it launches MainMenuActivity. </p>
+
+<h3>RegisterActivity.java</h3>
+<p>RegisterActivity includes text input forms which promptsfor a first name, last name, email, and password. The activity checks to make sure the fields aren’t empty when the register button is clicked and if the password is of valid length. When the register button is clicked, it submits a POST request to the server with the information from the text fields in JSON format.</p>
+
+<h3>LoginActivity.java</h3>
+<p>LoginActivity includes text input forms which prompts for the email and password. The activity checks to make sure the fields aren’t empty when the login button is clicked. If the fields aren't empty, the activity submits a POST request to the server with the information from the text fields in JSON format. If the response from the server is OK, then it launches the MainMenuActivity.</p>
+
+<h3>MainMenuActivity.java</h3>
+<p>MainMenuActivity consists of three buttons which will allow the user to navigate to the pages of Manage WiFi, Pick a Category, and View Fact History. Clicking on the buttons will start the intents of ManageWifiActivity, CategoryActivity, and FactHistoryActivity respectively.</p>
+
+<h3>FactHistoryActivity.java</h3>
+<p>FactHistoryActivity starts an asynchronous task which uses a GET request to the server to receive a JSON object of the facts the user played on the toy and the user’s vote status of each individual fact. The JSON object of facts is parsed into separate factItem objects which populates the listview to display them using a custom listview factItem arrayadapter. The factItems in the list are clickable and redirects the user to the ViewFactActivity when clicked, passing the factItem to the intent. </p>
+
+<h3>ViewFactActivity.java</h3>
+<p>ViewFactActivity displays the individual fact and allows the user to upvote/downvote it. Clicking on the upvote/downvote button sends a PUT request to the server.</p>
+
+<h3>ManageWifiActivity.java</h3>
+<p>ManageWifiActivity starts a socket connection and checks the correct connection through a two-way handshake with the toy. Once the connection is confirmed, it scans for the wireless networks available using a WiFi broadcast receiver. The networks are populated into list where each network is clickable. When the user clicks on a specific network, it displays a text input form for the user to enter in the credentials. When the connect button is clicked, the credentials are sent through the socket connection to the toy and then close the socket connection.
+</p>
