@@ -40,6 +40,7 @@ A join between the user and trivia tables. With additional properties: user vote
 <h2>Arduino</h2>
 
 <h3>Battery.cpp</h3>
+<p>This is a simple Arduino library to monitor battery consumption of your battery powered projects, being LiPo, LiIon, NiCd or any other battery type, single or multiple cells: if it can power your Arduino you can monitor it! The library monitors battery capacity by measuring the voltage across the battery terminals. </p>
 
 <h3>EMIC2.cpp</h3>
 <p>This is an Arduino library for interfacing the Emic 2 Text-to-Speech module. With the library, one can change the characteristics of the speech on the module through the use of methods and operators, for a less technical and more natural way of control. It can send messages provided as an immediate argument to a method, or by reference through a file in an SD card.
@@ -66,16 +67,49 @@ A join between the user and trivia tables. With additional properties: user vote
 <br>emic << value; - decreases speaking rate by value words/minute</p>
 
 <h3>ESP8266.cpp</h3>
+<p> An ESP8266 library for Arduino providing an easy-to-use way to manipulate ESP8266. Online API documentation can be reached at http://docs.iteadstudio.com/ITEADLIB_Arduino_WeeESP8266/index.html.
+
+
+bool    restart (void) : Restart ESP8266 by "AT+RST".
+
+String  getAPList (void) : Search available AP list and return it.
+
+bool    joinAP (String ssid, String pwd) : Join in AP. 
+
+bool    leaveAP (void) : Leave AP joined before.  
+
+String  getJoinedDeviceIP (void) : Get the IP list of devices connected to SoftAP. 
+
+String  getIPStatus (void) : Get the current status of connection(UDP and TCP). 
+
+String  getLocalIP (void) : Get the IP address of ESP8266. 
+
+bool    enableMUX (void) : Enable IP MUX(multiple connection mode). 
+
+bool    disableMUX (void) : Disable IP MUX(single connection mode). 
+
+bool    createTCP (String addr, uint32_t port) : Create TCP connection in single mode. 
+
+bool    releaseTCP (void) : Release TCP connection in single mode. 
+
+bool    registerUDP (String addr, uint32_t port) : Register UDP port number in single mode. 
+
+bool    unregisterUDP (void) : Unregister UDP port number in single mode. 
+
+bool    startTCPServer (uint32_t port=333) : Start TCP Server(Only in multiple mode). 
+
+bool    stopTCPServer (void) : Stop TCP Server(Only in multiple mode). 
+
+bool    send (const uint8_t *buffer, uint32_t len) : Send data based on TCP or UDP builded already in single mode. 
+
+uint32_t    recv (uint8_t *buffer, uint32_t buffer_size, uint32_t timeout=1000) : Receive data from TCP or UDP builded already in single mode.   </p>
 
 <h3>I2Cdev.cpp</h3>
 
 The I2C Device Library (i2cdevlib) is a collection of uniform and well-documented classes to provide simple and intuitive interfaces to I2C devices. Each device is built to make use of the generic "I2Cdev" class, which abstracts the I2C bit- and byte-level communication away from each specific device class, making it easy to keep the device class clean while providing a simple way to modify just one class to port the I2C communication code onto different platforms (Arduino, PIC, MSP430, Jennic, simple bit-banging, etc.). Device classes are designed to provide complete coverage of all functionality described by each device's documentation, plus any generic convenience functions that are helpful.
 
-<h3>MPU6050.cpp</h3>
-
 <h3>microprocessor.ino</h3>
-
-<h2>Android App</h2>
+The microprocessor.ino file is the file that incorporates all of the above libraries and runs the code that the Trivia Throw Toy runs on. The file runs a setup() and loop() function for initializing the code and constantly checking for acceleration. In the setup(), all modules are initialized and the wifi is setup to connect to the internet. In the loop function, the toy is constantly checking for acceleration above a certain threshold; when the acceleration is detected, a fact is pulled from the SD card, translated to speech via the EMIC2 and spoken aloud through the speaker. The toy also makes call to the cloud server when the wifi is connected and the cache on the sd has space to bring facts on as well as update the server about what facts have been heard. The state of the toy is displayed via LEDs and a FSM that lets the user know if the toy is connected to wifi, pulling a fact in or has low battery.
 
 <h2>iOS App</h2>
 <p> XCode 8.3.2 <br> Swift 3 </p>
@@ -87,11 +121,11 @@ The I2C Device Library (i2cdevlib) is a collection of uniform and well-documente
 Xcode provides an app delegate class for every new project, so you do not need to define one yourself initially. When your app launches, UIKit automatically creates an instance of the app delegate class provided by Xcode and uses it to execute the first bits of custom code in your app. All you have to do is take the class that Xcode provides and add your custom code.
 The app delegate is effectively the root object of your app. Like the UIApplication object itself, the app delegate is a singleton object and is always present at runtime. Although the UIApplication object does most of the underlying work to manage the app, you decide your app’s overall behavior by providing appropriate implementations of the app delegate’s methods. Although most methods of this protocol are optional, you should implement most or all of them.
 <br>The app delegate performs several crucial roles:
-<br>It contains your app’s startup code.</br>
-<br>It responds to key changes in the state of your app. Specifically, it responds to both temporary interruptions and to changes in the execution state of your app, such as when your app transitions from the foreground to the background.</br>
-<br>It responds to notifications originating from outside the app, such as remote notifications (also known as push notifications), low-memory warnings, download completion notifications, and more.</br>
-<br>It determines whether state preservation and restoration should occur and assists in the preservation and restoration process as needed.</br>
-<br>It responds to events that target the app itself and are not specific to your app’s views or view controllers.</br>
+<br>It contains your app’s startup code.
+<br>It responds to key changes in the state of your app. Specifically, it responds to both temporary interruptions and to changes in the execution state of your app, such as when your app transitions from the foreground to the background.
+<br>It responds to notifications originating from outside the app, such as remote notifications (also known as push notifications), low-memory warnings, download completion notifications, and more.
+<br>It determines whether state preservation and restoration should occur and assists in the preservation and restoration process as needed.
+<br>It responds to events that target the app itself and are not specific to your app’s views or view controllers.
 You can use it to store your app’s central data objects or any content that does not have an owning view controller. </p>
 
 
