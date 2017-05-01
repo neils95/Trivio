@@ -34,8 +34,6 @@
         <activity android:name=".ViewFactActivity" />
         <activity android:name=".ManageWifiActivity" />
         <activity android:name=".CategoryActivity" />
-        <activity android:name=".WifiConnectActivity" />
-        <activity android:name=".CheckPhoneConnectionActivity" />
         <activity android:name=".RegisterActivity"></activity>
     </application>
 
