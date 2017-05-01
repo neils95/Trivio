@@ -21,7 +21,7 @@ Jacob Dansey, Changshuo Fu, Christine Low, Urvashi Mohnani, Neil Sanghrajka</h2>
 <p>Holds the Solidworks and STL files of the Trivio toy shell design.</p>
 
 <h3>PCB Files</h3>
-<p> </p>
+<p>Files related to PCB design and printing</p>
 
 <h3>Reports</h3>
 <p>Trivio Reports which include:</p>
@@ -34,7 +34,6 @@ Jacob Dansey, Changshuo Fu, Christine Low, Urvashi Mohnani, Neil Sanghrajka</h2>
 <li>Functional Testing Report</li>
 <li>Gantchart</li>
 <li>PDRR Report</li>
-<li>ReportsReadMe</li>
 <li>Second Deliverable Test Plan</li>
 <li>Second Deliverable Test Report</li>
 <li>User's Manual</li>
