@@ -36,7 +36,6 @@ User table object. Columns: Name,Email,Password, trivia count and history count.
 A join between the user and trivia tables. With additional properties: user vote.
 
 </ul>
-<h3>Database schema</h3>
 
 <h2>Arduino</h2>
 
